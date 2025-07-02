@@ -1,3 +1,4 @@
+
 // This file contains all the mock data for the application.
 // In a real-world scenario, this data would come from a database.
 
@@ -172,6 +173,7 @@ export type Region = {
 export const initialRegions: Region[] = [
     { id: 'na', name: 'North America', description: 'All US and Canadian facilities', tags: ["amer"], parentId: undefined },
     { id: 'eu', name: 'Europe', description: 'European data centers and offices', tags: ["emea"], parentId: undefined },
+    { id: 'us-east', name: 'US East', description: 'East coast data centers', tags: [], parentId: 'na' },
 ];
 
 // Site Groups
@@ -208,7 +210,7 @@ export type Site = {
     comments?: string;
 }
 export const initialSites: Site[] = [
-    { id: 'florim-tn', name: 'Florim TN Data Center', slug: 'florim-tn-dc', regionId: 'na', status: 'active', groupId: 'dc', tags: ['primary'], latitude: 36.5297, longitude: -87.3595 },
+    { id: 'florim-tn', name: 'Florim TN Data Center', slug: 'florim-tn-dc', regionId: 'us-east', status: 'active', groupId: 'dc', tags: ['primary'], latitude: 36.5297, longitude: -87.3595 },
     { id: 'dub-office', name: 'Dublin Office', slug: 'dub-office', regionId: 'eu', status: 'planned', groupId: 'office', tags: [], latitude: 53.3498, longitude: -6.2603 },
 ];
 
@@ -272,6 +274,32 @@ export const initialContacts: Contact[] = [
     { id: 'contact-1', name: 'John Doe', email: 'j.doe@example.com', phone: '123-456-7890', title: 'Network Engineer' },
     { id: 'contact-2', name: 'Jane Smith', email: 'j.smith@example.com', phone: '098-765-4321', title: 'Data Center Manager' },
 ];
+
+// Contact Roles
+export type ContactRole = {
+    id: string;
+    name: string;
+    description: string;
+}
+export const initialContactRoles: ContactRole[] = [
+    { id: 'role-noc', name: 'NOC', description: 'Network Operations Center contact.'},
+    { id: 'role-admin', name: 'Administrative', description: 'Administrative or billing contact.'},
+    { id: 'role-technical', name: 'Technical', description: 'Primary technical point of contact.'},
+]
+
+// Contact Assignments
+export type ContactAssignment = {
+    id: string;
+    objectType: 'region' | 'site' | 'location';
+    objectId: string;
+    contactId: string;
+    roleId: string;
+}
+export const initialContactAssignments: ContactAssignment[] = [
+    { id: 'assign-1', objectType: 'region', objectId: 'na', contactId: 'contact-2', roleId: 'role-admin'},
+    { id: 'assign-2', objectType: 'site', objectId: 'florim-tn', contactId: 'contact-1', roleId: 'role-technical'},
+];
+
 
 // Tags
 export type Tag = {

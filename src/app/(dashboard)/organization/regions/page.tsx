@@ -6,6 +6,7 @@ import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -215,7 +216,11 @@ export default function RegionsPage() {
             <TableBody>
               {regions.map((region) => (
                 <TableRow key={region.id}>
-                  <TableCell className="font-medium">{region.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link href={`/organization/regions/${region.id}`} className="hover:underline">
+                        {region.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>{getRegionName(region.parentId)}</TableCell>
                   <TableCell>{region.description}</TableCell>
                    <TableCell>
@@ -236,6 +241,9 @@ export default function RegionsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                           <Link href={`/organization/regions/${region.id}`}>View Details</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem>Edit</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
