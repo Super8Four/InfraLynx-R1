@@ -33,11 +33,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const devices = [
   {
     name: "core-sw-01",
+    manufacturer: "Juniper",
+    model: "QFX5120",
     status: "Online",
     role: "Core Switch",
     site: "Data Center A",
@@ -46,6 +47,8 @@ const devices = [
   },
   {
     name: "edge-router-01",
+    manufacturer: "Cisco",
+    model: "ASR1001-X",
     status: "Online",
     role: "Edge Router",
     site: "Data Center A",
@@ -54,6 +57,8 @@ const devices = [
   },
   {
     name: "access-sw-lobby",
+    manufacturer: "Arista",
+    model: "720XP",
     status: "Offline",
     role: "Access Switch",
     site: "Office Building 1",
@@ -62,14 +67,18 @@ const devices = [
   },
   {
     name: "server-vmhost-01",
+    manufacturer: "Dell",
+    model: "PowerEdge R740",
     status: "Online",
     role: "Virtualization Host",
     site: "Data Center B",
     ip: "10.2.5.10",
     tags: ["compute", "vmware"],
   },
-    {
+  {
     name: "firewall-corp",
+    manufacturer: "Palo Alto",
+    model: "PA-3220",
     status: "Provisioning",
     role: "Firewall",
     site: "Data Center A",
@@ -149,6 +158,8 @@ export default function DevicesPage() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="hidden md:table-cell">Manufacturer</TableHead>
+              <TableHead className="hidden md:table-cell">Model</TableHead>
               <TableHead className="hidden md:table-cell">Role</TableHead>
               <TableHead className="hidden md:table-cell">Site</TableHead>
               <TableHead className="hidden lg:table-cell">Primary IP</TableHead>
@@ -163,6 +174,8 @@ export default function DevicesPage() {
               <TableRow key={device.name}>
                 <TableCell className="font-medium">{device.name}</TableCell>
                 <TableCell>{getStatusBadge(device.status)}</TableCell>
+                <TableCell className="hidden md:table-cell">{device.manufacturer}</TableCell>
+                <TableCell className="hidden md:table-cell">{device.model}</TableCell>
                 <TableCell className="hidden md:table-cell">
                   {device.role}
                 </TableCell>
