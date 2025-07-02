@@ -49,14 +49,16 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { initialTenants, type Tenant } from "@/lib/data"
+import { initialTenants, initialTenantGroups, type Tenant, type TenantGroup } from "@/lib/data"
 
 const tenantSchema = z.object({
   name: z.string().min(1, "Name is required"),
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens."),
   description: z.string().optional(),
+  groupId: z.string().optional(),
 })
 
 type TenantFormValues = z.infer<typeof tenantSchema>
@@ -64,6 +66,7 @@ type TenantFormValues = z.infer<typeof tenantSchema>
 export default function TenantsPage() {
   const { toast } = useToast()
   const [tenants, setTenants] = useState<Tenant[]>(initialTenants)
+  const [tenantGroups] = useState<TenantGroup[]>(initialTenantGroups)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
 
   const form = useForm<TenantFormValues>({
@@ -87,6 +90,8 @@ export default function TenantsPage() {
     setTenants((prev) => prev.filter((t) => t.id !== id))
     toast({ title: "Success", description: "Tenant has been deleted." })
   }
+  
+  const getGroupName = (id?: string) => tenantGroups.find(g => g.id === id)?.name ?? "—"
 
   return (
     <div className="space-y-6">
@@ -136,6 +141,20 @@ export default function TenantsPage() {
                         </FormItem>
                       )}
                     />
+                     <FormField
+                      control={form.control}
+                      name="groupId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Group</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select a group" /></SelectTrigger></FormControl>
+                                <SelectContent>{tenantGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormField
                       control={form.control}
                       name="description"
@@ -165,6 +184,7 @@ export default function TenantsPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Slug</TableHead>
+                <TableHead>Group</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
@@ -174,6 +194,7 @@ export default function TenantsPage() {
                 <TableRow key={tenant.id}>
                   <TableCell className="font-medium">{tenant.name}</TableCell>
                   <TableCell className="font-mono text-sm">{tenant.slug}</TableCell>
+                  <TableCell>{getGroupName(tenant.groupId)}</TableCell>
                   <TableCell>{tenant.description}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

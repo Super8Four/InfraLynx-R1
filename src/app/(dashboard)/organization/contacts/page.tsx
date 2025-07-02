@@ -49,14 +49,16 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { initialContacts, type Contact } from "@/lib/data"
+import { initialContacts, initialContactGroups, type Contact, type ContactGroup } from "@/lib/data"
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required"),
   title: z.string().min(1, "Title is required"),
+  groupId: z.string().optional(),
 })
 
 type ContactFormValues = z.infer<typeof contactSchema>
@@ -64,6 +66,7 @@ type ContactFormValues = z.infer<typeof contactSchema>
 export default function ContactsPage() {
   const { toast } = useToast()
   const [contacts, setContacts] = useState<Contact[]>(initialContacts)
+  const [contactGroups] = useState<ContactGroup[]>(initialContactGroups)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
 
   const form = useForm<ContactFormValues>({
@@ -86,6 +89,8 @@ export default function ContactsPage() {
     setContacts((prev) => prev.filter((c) => c.id !== id))
     toast({ title: "Success", description: "Contact has been deleted." })
   }
+  
+  const getGroupName = (id?: string) => contactGroups.find(g => g.id === id)?.name ?? "—"
 
   return (
     <div className="space-y-6">
@@ -164,6 +169,20 @@ export default function ContactsPage() {
                         </FormItem>
                       )}
                     />
+                     <FormField
+                      control={form.control}
+                      name="groupId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Group</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Select a group" /></SelectTrigger></FormControl>
+                                <SelectContent>{contactGroups.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}</SelectContent>
+                            </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <DialogFooter>
                       <Button type="button" variant="ghost" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
                       <Button type="submit">Add Contact</Button>
@@ -182,6 +201,7 @@ export default function ContactsPage() {
                 <TableHead>Title</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Phone</TableHead>
+                <TableHead>Group</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
@@ -192,6 +212,7 @@ export default function ContactsPage() {
                   <TableCell>{contact.title}</TableCell>
                   <TableCell>{contact.email}</TableCell>
                   <TableCell>{contact.phone}</TableCell>
+                  <TableCell>{getGroupName(contact.groupId)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
