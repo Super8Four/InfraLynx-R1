@@ -20,62 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { PlusCircle, Edit, Server, Tv, Globe } from "lucide-react"
-
-type IPAddress = {
-  address: string;
-  status: "active" | "reserved" | "dhcp" | "deprecated";
-  assigned_object_type?: "device" | "vm" | "interface";
-  assigned_object_id?: string;
-  dns_name?: string;
-  description?: string;
-};
-
-type Prefix = {
-  prefix: string;
-  status: "active" | "reserved" | "deprecated";
-  site: string;
-  description: string;
-  tags: string[];
-  usage: number;
-  ips: IPAddress[];
-};
-
-const prefixes: Prefix[] = [
-    {
-        prefix: "10.1.1.0/24",
-        status: "active",
-        site: "Data Center A",
-        description: "Core Server Segment",
-        tags: ["core", "servers", "production"],
-        usage: 40,
-        ips: [
-            { address: "10.1.1.1", status: "active", assigned_object_type: "device", assigned_object_id: "core-sw-01", dns_name: "core-sw-01.example.com", description: "Gateway" },
-            { address: "10.1.1.10", status: "active", assigned_object_type: "vm", assigned_object_id: "web-server-01", dns_name: "web-server-01.example.com", description: "Primary Web Server" },
-            { address: "10.1.1.11", status: "dhcp", assigned_object_type: "vm", assigned_object_id: "web-server-02" },
-            { address: "10.1.1.254", status: "reserved", description: "Broadcast" },
-        ],
-    },
-    {
-        prefix: "192.168.10.0/24",
-        status: "active",
-        site: "Office Building 1",
-        description: "Corporate User Desktops",
-        tags: ["users", "corp"],
-        usage: 85,
-        ips: [
-             { address: "192.168.10.55", status: "dhcp", assigned_object_type: "device", assigned_object_id: "jdoe-laptop", dns_name: "jdoe-laptop.corp.example.com" },
-        ],
-    },
-    {
-        prefix: "172.16.0.0/16",
-        status: "deprecated",
-        site: "Legacy DC",
-        description: "Old Guest Network - To be removed",
-        tags: ["legacy", "guest"],
-        usage: 10,
-        ips: [],
-    },
-];
+import { prefixes, type Prefix } from "@/lib/data"
 
 const getStatusBadge = (status: string) => {
     switch (status) {

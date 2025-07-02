@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: 'InfraLynx',
-  description: 'Universal InfraTrack inspired by NetBox',
+  description: 'DCIM and IPAM solution inspired by NetBox',
 };
 
 export default function RootLayout({

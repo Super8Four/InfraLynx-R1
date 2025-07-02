@@ -76,6 +76,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { initialDevices, type Device } from "@/lib/data"
 
 const deviceSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -89,61 +90,6 @@ const deviceSchema = z.object({
 })
 
 type DeviceFormValues = z.infer<typeof deviceSchema>
-type Device = Omit<DeviceFormValues, 'tags'> & { tags: string[] };
-
-
-const initialDevices: Device[] = [
-  {
-    name: "core-sw-01",
-    manufacturer: "Juniper",
-    model: "QFX5120",
-    status: "Online",
-    role: "Core Switch",
-    site: "Data Center A",
-    ip: "10.1.1.2",
-    tags: ["core", "critical"],
-  },
-  {
-    name: "edge-router-01",
-    manufacturer: "Cisco",
-    model: "ASR1001-X",
-    status: "Online",
-    role: "Edge Router",
-    site: "Data Center A",
-    ip: "192.0.2.1",
-    tags: ["edge", "critical"],
-  },
-  {
-    name: "access-sw-lobby",
-    manufacturer: "Arista",
-    model: "720XP",
-    status: "Offline",
-    role: "Access Switch",
-    site: "Office Building 1",
-    ip: "10.10.20.5",
-    tags: ["access", "users"],
-  },
-  {
-    name: "server-vmhost-01",
-    manufacturer: "Dell",
-    model: "PowerEdge R740",
-    status: "Online",
-    role: "Virtualization Host",
-    site: "Data Center B",
-    ip: "10.2.5.10",
-    tags: ["compute", "vmware"],
-  },
-  {
-    name: "firewall-corp",
-    manufacturer: "Palo Alto",
-    model: "PA-3220",
-    status: "Provisioning",
-    role: "Firewall",
-    site: "Data Center A",
-    ip: "10.1.1.1",
-    tags: ["security"],
-  },
-]
 
 export default function DevicesPage() {
   const { toast } = useToast()

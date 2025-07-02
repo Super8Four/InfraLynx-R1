@@ -1,26 +1,29 @@
 "use client"
 
 import {
-  Activity,
   Cable,
   Network,
   Server,
   MoreVertical,
+  CheckCircle,
 } from "lucide-react"
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
   Line,
   LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
+  Cell,
+  CartesianGrid,
   XAxis,
   YAxis,
 } from "recharts"
+import {
+  initialDevices,
+  prefixes,
+  recentActivity,
+} from "@/lib/data"
 
 import {
   Card,
@@ -52,46 +55,46 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-const MOCK_STATS = [
-  {
-    title: "Total Devices",
-    value: "1,234",
-    change: "+5.1%",
-    icon: Server,
-  },
-  {
-    title: "Racks Utilized",
-    value: "452",
-    change: "+12.3%",
-    icon: Server,
-  },
-  {
-    title: "IPs Assigned",
-    value: "10,890",
-    change: "+2.8%",
-    icon: Network,
-  },
-  {
-    title: "Active Circuits",
-    value: "78",
-    change: "-1.2%",
-    icon: Cable,
-  },
-]
+// --- Data Calculations ---
 
-const ipUsageData = [
-  { name: "DHCP", value: 4567, fill: "var(--color-dhcp)" },
-  { name: "Static", value: 3456, fill: "var(--color-static)" },
-  { name: "Reserved", value: 2867, fill: "var(--color-reserved)" },
-  { name: "Available", value: 8910, fill: "var(--color-available)" },
-]
+// Stats
+const totalDevices = initialDevices.length
+const onlineDevices = initialDevices.filter(d => d.status === "Online").length
+const onlineDevicePercentage = totalDevices > 0 ? (onlineDevices / totalDevices) * 100 : 0
+
+const totalPrefixes = prefixes.length
+const activePrefixes = prefixes.filter(p => p.status === 'active').length
+
+const totalIPs = prefixes.reduce((acc, p) => {
+    const cidr = parseInt(p.prefix.split('/')[1], 10);
+    return acc + Math.pow(2, 32 - cidr);
+}, 0);
+const assignedIPs = prefixes.reduce((acc, p) => acc + p.ips.length, 0);
+
+
+// IP Usage Pie Chart
+const ipStatusCounts = prefixes
+  .flatMap(p => p.ips)
+  .reduce((acc, ip) => {
+    acc[ip.status] = (acc[ip.status] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+const ipUsageData = Object.entries(ipStatusCounts).map(([name, value]) => ({
+  name: name.charAt(0).toUpperCase() + name.slice(1),
+  value,
+  fill: `var(--color-${name})`,
+}))
+
 const ipUsageConfig = {
-  dhcp: { label: "DHCP", color: "hsl(var(--chart-1))" },
-  static: { label: "Static", color: "hsl(var(--chart-2))" },
+  active: { label: "Active", color: "hsl(var(--chart-1))" },
+  dhcp: { label: "DHCP", color: "hsl(var(--chart-2))" },
   reserved: { label: "Reserved", color: "hsl(var(--chart-3))" },
-  available: { label: "Available", color: "hsl(var(--chart-4))" },
+  deprecated: { label: "Deprecated", color: "hsl(var(--chart-4))" },
 } satisfies ChartConfig
 
+
+// Rack Capacity Chart (remains static for now)
 const rackCapacityData = [
   { date: "2024-01", dc1: 65, dc2: 45 },
   { date: "2024-02", dc1: 70, dc2: 50 },
@@ -106,42 +109,35 @@ const rackCapacityConfig = {
   dc2: { label: "DC-2", color: "hsl(var(--chart-2))" },
 } satisfies ChartConfig
 
-const recentActivity = [
-  {
-    id: 1,
-    user: "admin",
-    action: "add_device",
-    target: "edge-router-01",
-    status: "Success",
-    time: "2 hours ago",
-  },
-  {
-    id: 2,
-    user: "jdoe",
-    action: "patch_cable",
-    target: "core-sw-01:ge-0/0/1",
-    status: "Success",
-    time: "5 hours ago",
-  },
-  {
-    id: 3,
-    user: "automation",
-    action: "update_ip",
-    target: "10.1.1.15",
-    status: "Success",
-    time: "1 day ago",
-  },
-  {
-    id: 4,
-    user: "admin",
-    action: "add_vlan",
-    target: "VLAN 100",
-    status: "Failed",
-    time: "2 days ago",
-  },
-]
 
 export default function DashboardPage() {
+  const MOCK_STATS = [
+    {
+      title: "Total Devices",
+      value: totalDevices.toLocaleString(),
+      change: `${onlineDevices} Online`,
+      icon: Server,
+    },
+    {
+        title: "Device Health",
+        value: `${onlineDevicePercentage.toFixed(1)}%`,
+        change: "Online",
+        icon: CheckCircle,
+    },
+    {
+      title: "IPs Assigned",
+      value: assignedIPs.toLocaleString(),
+      change: `of ${totalIPs.toLocaleString()}`,
+      icon: Network,
+    },
+    {
+      title: "Active Prefixes",
+      value: activePrefixes.toLocaleString(),
+      change: `of ${totalPrefixes} total`,
+      icon: Cable,
+    },
+  ]
+
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -203,7 +199,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>IP Address Usage</CardTitle>
             <CardDescription>
-              Breakdown of assigned IPv4 addresses.
+              Breakdown of assigned IPv4 addresses by status.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
