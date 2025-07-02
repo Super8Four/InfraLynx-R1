@@ -1,4 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
 type Device = {
@@ -10,25 +11,35 @@ type Device = {
   role?: string
 }
 
-type RackProps = {
+type RackInfo = {
   id: string
+  status: "active" | "planned" | "decommissioned"
+  role: string
+  devices: Device[]
   uHeight?: number
-  devices?: Device[]
+  comments?: string
 }
 
-const DEFAULT_DEVICES: Device[] = [
-  { id: 1, name: "Router-A1", u: 42, height: 1, color: "bg-blue-500" },
-  { id: 2, name: "Switch-A1", u: 40, height: 2, color: "bg-green-500" },
-  { id: 3, name: "Server-A101", u: 30, height: 2, color: "bg-yellow-500" },
-  { id: 4, name: "Server-A102", u: 28, height: 2, color: "bg-yellow-500" },
-  { id: 5, name: "PDU-L", u: 1, height: 10, color: "bg-gray-700" },
-]
+type RackProps = {
+  rack: RackInfo
+}
 
-export default function Rack({
-  id,
-  uHeight = 42,
-  devices = DEFAULT_DEVICES,
-}: RackProps) {
+const getStatusBadge = (status: RackInfo['status']) => {
+    switch (status) {
+      case "active":
+        return <Badge className="capitalize bg-green-500/20 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-500/20">{status}</Badge>
+      case "planned":
+        return <Badge className="capitalize bg-blue-500/20 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-500/20">{status}</Badge>
+      case "decommissioned":
+        return <Badge variant="destructive" className="capitalize">{status}</Badge>
+      default:
+        return <Badge variant="outline" className="capitalize">{status}</Badge>
+    }
+}
+
+
+export default function Rack({ rack }: RackProps) {
+  const { id, uHeight = 42, devices, status, role, comments } = rack
   const units = Array.from({ length: uHeight }, (_, i) => uHeight - i)
 
   const mountedDevices = new Map<number, Device>()
@@ -41,7 +52,11 @@ export default function Rack({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{id}</CardTitle>
+        <div className="flex items-center justify-between">
+            <CardTitle>{id}</CardTitle>
+            {getStatusBadge(status)}
+        </div>
+        <CardDescription>{role}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex justify-between gap-2">
@@ -81,6 +96,7 @@ export default function Rack({
             ))}
           </div>
         </div>
+        {comments && <p className="text-xs text-muted-foreground mt-4 pt-4 border-t">{comments}</p>}
       </CardContent>
     </Card>
   )
