@@ -1,18 +1,18 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default function OrganizationPage() {
+export default function LocationsPage() {
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Organization</CardTitle>
+          <CardTitle>Locations</CardTitle>
           <CardDescription>
-            Overview of your organization's infrastructure resources.
+            Manage floors, rooms, or other locations within a site.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p>This section contains all organizational data, including sites, tenancy, and contacts.</p>
+          <p>Locations page content goes here.</p>
         </CardContent>
       </Card>
     </div>
