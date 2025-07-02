@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Share2, Map, Route } from "lucide-react"
-import Image from "next/image"
+import DeviceTopologyGraph from "@/components/device-topology-graph"
 
 
 export default function TopologyPage() {
@@ -11,7 +11,7 @@ export default function TopologyPage() {
         <CardHeader>
           <CardTitle>Topology</CardTitle>
           <CardDescription>
-            Visualize network topology graphs. This section is a placeholder for future topology mapping features.
+            Visualize network topology graphs.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -33,9 +33,9 @@ export default function TopologyPage() {
             </div>
           </div>
           <div className="mt-8 pt-6 border-t">
-            <h3 className="text-center font-semibold mb-4">Example Topology View</h3>
-            <div className="flex items-center justify-center p-4 border rounded-md bg-muted/50">
-                 <Image src="https://placehold.co/800x400.png" alt="Map placeholder" width={800} height={400} className="rounded-md" data-ai-hint="network diagram"/>
+            <h3 className="text-lg font-semibold mb-4 text-center">Device Connectivity Graph</h3>
+            <div className="flex items-center justify-center p-4 border rounded-md bg-muted/50 min-h-[450px]">
+                 <DeviceTopologyGraph />
             </div>
           </div>
         </CardContent>
