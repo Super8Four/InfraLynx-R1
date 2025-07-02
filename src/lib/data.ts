@@ -173,10 +173,12 @@ export type Region = {
     name: string;
     slug: string;
     description: string;
+    parentId?: string;
+    tags: string[];
 }
 export const initialRegions: Region[] = [
-    { id: 'na', name: 'North America', slug: 'north-america', description: 'All US and Canadian facilities' },
-    { id: 'eu', name: 'Europe', slug: 'europe', description: 'European data centers and offices' },
+    { id: 'na', name: 'North America', slug: 'north-america', description: 'All US and Canadian facilities', tags: ["amer"] },
+    { id: 'eu', name: 'Europe', slug: 'europe', description: 'European data centers and offices', tags: ["emea"] },
 ];
 
 // Sites
