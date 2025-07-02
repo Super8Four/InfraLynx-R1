@@ -1,3 +1,4 @@
+
 "use client"
 
 import Link from "next/link"
@@ -6,6 +7,7 @@ import {
   LayoutDashboard,
   Building2,
   Server,
+  HardDrive,
   Cable,
   Wifi,
   Network,
@@ -30,6 +32,7 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/organization", label: "Org", icon: Building2 },
   { href: "/racks", label: "Racks", icon: Server },
+  { href: "/devices", label: "Devices", icon: HardDrive },
   { href: "/cabling", label: "Connections", icon: Cable },
   { href: "/wireless", label: "Wireless", icon: Wifi },
   { href: "/ipam", label: "IPAM", icon: Network },
