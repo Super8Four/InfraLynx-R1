@@ -1,9 +1,9 @@
 // This file contains all the mock data for the application.
 // In a real-world scenario, this data would come from a database.
 
-// --- DEVICES ---
-
 import * as z from "zod";
+
+// --- DEVICES ---
 
 const deviceSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -164,3 +164,70 @@ export const recentActivity = [
       time: "2 days ago",
     },
   ]
+
+// --- ORGANIZATION ---
+
+// Regions
+export type Region = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+}
+export const initialRegions: Region[] = [
+    { id: 'na', name: 'North America', slug: 'north-america', description: 'All US and Canadian facilities' },
+    { id: 'eu', name: 'Europe', slug: 'europe', description: 'European data centers and offices' },
+];
+
+// Sites
+export type Site = {
+    id: string;
+    name: string;
+    slug: string;
+    regionId: string;
+    facility: string;
+    address: string;
+    status: 'active' | 'offline' | 'planned';
+}
+export const initialSites: Site[] = [
+    { id: 'florim-tn', name: 'Florim TN Data Center', slug: 'florim-tn-dc', regionId: 'na', facility: 'Main DC', address: '123 Industrial Blvd, Clarksville, TN', status: 'active'},
+    { id: 'dub-office', name: 'Dublin Office', slug: 'dub-office', regionId: 'eu', facility: 'Branch Office', address: '456 Tech Way, Dublin, Ireland', status: 'planned'},
+];
+
+// Locations
+export type Location = {
+    id: string;
+    name: string;
+    siteId: string;
+    description: string;
+}
+export const initialLocations: Location[] = [
+    { id: 'tn-dc-room-1', name: 'Server Room 1', siteId: 'florim-tn', description: 'Main server room housing racks A1–A10'},
+    { id: 'tn-dc-room-2', name: 'Meet-Me-Room', siteId: 'florim-tn', description: 'Carrier interconnect room'},
+];
+
+// Tenants
+export type Tenant = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    groupId?: string;
+}
+export const initialTenants: Tenant[] = [
+    { id: 'tenant-a', name: 'Internal Services', slug: 'internal-services', description: 'Company-internal applications and infrastructure' },
+    { id: 'tenant-b', name: 'Customer Hosting', slug: 'customer-hosting', description: 'Shared hosting platform for external customers' },
+];
+
+// Contacts
+export type Contact = {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    title: string;
+}
+export const initialContacts: Contact[] = [
+    { id: 'contact-1', name: 'John Doe', email: 'j.doe@example.com', phone: '123-456-7890', title: 'Network Engineer' },
+    { id: 'contact-2', name: 'Jane Smith', email: 'j.smith@example.com', phone: '098-765-4321', title: 'Data Center Manager' },
+];
