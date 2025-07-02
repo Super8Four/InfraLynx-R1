@@ -58,7 +58,6 @@ import { Badge } from "@/components/ui/badge"
 
 const regionSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens."),
   parentId: z.string().optional(),
   description: z.string().optional(),
   tags: z.string().optional(),
@@ -73,14 +72,13 @@ export default function RegionsPage() {
 
   const form = useForm<RegionFormValues>({
     resolver: zodResolver(regionSchema),
-    defaultValues: { name: "", slug: "", parentId: "none", description: "", tags: "" },
+    defaultValues: { name: "", parentId: "none", description: "", tags: "" },
   })
 
   function onSubmit(data: RegionFormValues) {
     const newRegion: Region = {
       id: `region-${Date.now()}`,
       name: data.name,
-      slug: data.slug,
       parentId: data.parentId === 'none' ? undefined : data.parentId,
       description: data.description || "",
       tags: data.tags ? data.tags.split(",").map((tag) => tag.trim()) : [],
@@ -161,19 +159,6 @@ export default function RegionsPage() {
                           <FormLabel>Name</FormLabel>
                           <FormControl>
                             <Input placeholder="e.g., North America" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                     <FormField
-                      control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Slug</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., north-america" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
