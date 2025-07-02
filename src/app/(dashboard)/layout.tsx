@@ -20,15 +20,24 @@ const LynxIcon = (props: React.SVGProps<SVGSVGElement>) => (
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="1.5"
       strokeLinecap="round"
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M14.5 4.5L18 2" />
-      <path d="M9.5 4.5L6 2" />
-      <path d="M12 20c-4 0-6-2-6-6V9a6 6 0 016-6h0a6 6 0 016 6v5c0 4-2 6-6 6z" />
-      <path d="M12 15a2 2 0 00-2 2" />
+      <path d="M12 22L6 18L3 13V7L5 2L8 5L12 4L16 5L19 2L21 7V13L18 18L12 22Z" />
+      <path d="M12 4V9 M12 13V22" />
+      <path d="M8 9V16 M16 9V16" />
+      <path d="M8 9H16 M8 12H16 M8 16H16" />
+      <path d="M8 9L4 10L8 12 M16 9L20 10L16 12" />
+      <path d="M12 9L8 12 M12 9L16 12" />
+      <path d="M12 13L8 12 M12 13L16 12" />
+      <path d="M12 13L10.5 14.5L12 16L13.5 14.5L12 13Z" />
+      <path d="M8 12L3 13L8 16 M16 12L21 13L16 16" />
+      <path d="M8 16L6 18 M16 16L18 18" />
+      <path d="M12 4L8 5L8 9 M12 4L16 5L16 9" />
+      <path d="M8 5L5 2 M16 5L19 2" />
+      <path d="M8 5L3 7 M16 5L21 7" />
     </svg>
 )
 
