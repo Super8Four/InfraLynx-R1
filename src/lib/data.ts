@@ -1,4 +1,3 @@
-
 // This file contains all the mock data for the application.
 // In a real-world scenario, this data would come from a database.
 
@@ -246,6 +245,20 @@ export const initialContacts: Contact[] = [
     { id: 'contact-2', name: 'Jane Smith', email: 'j.smith@example.com', phone: '098-765-4321', title: 'Data Center Manager' },
 ];
 
+// Tags
+export type Tag = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+}
+export const initialTags: Tag[] = [
+    { id: 'tag-1', name: 'Critical', slug: 'critical', description: 'Critical infrastructure devices' },
+    { id: 'tag-2', name: 'Core', slug: 'core', description: 'Core network infrastructure' },
+    { id: 'tag-3', name: 'Users', slug: 'users', description: 'User-facing networks or devices' },
+    { id: 'tag-4', name: 'Security', slug: 'security', description: 'Security appliances and configurations' },
+];
+
 
 // --- RACKS ---
 export type RackRole = {
@@ -352,4 +365,3 @@ export type RackReservation = {
 export const initialRackReservations: RackReservation[] = [
     { id: 'res-1', rackId: 'rack-1', units: [40, 41], tenantId: 'tenant-a', description: 'Reserved for new core firewall' },
 ];
-

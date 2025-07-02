@@ -85,6 +85,9 @@ const organizationLinks = {
     { href: "/organization/contact-roles", label: "Contact Roles", icon: ClipboardList },
     { href: "/organization/contact-assignments", label: "Contact Assignments", icon: UserCheck },
   ],
+  general: [
+      { href: "/organization/tags", label: "Tags", icon: Tag },
+  ]
 };
 
 const rackLinks = [
@@ -147,6 +150,9 @@ export function NavLinks() {
 
              <div className="font-semibold text-xs text-muted-foreground px-3 pt-2">CONTACTS</div>
              {organizationLinks.contacts.map(item => <NavLink key={item.label} {...item} isSubItem />)}
+
+             <div className="font-semibold text-xs text-muted-foreground px-3 pt-2">GENERAL</div>
+             {organizationLinks.general.map(item => <NavLink key={item.label} {...item} isSubItem />)}
         </CollapsibleContent>
     </Collapsible>
     
