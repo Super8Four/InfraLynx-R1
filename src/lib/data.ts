@@ -1,6 +1,9 @@
 
 // This file contains all the mock data for the application.
 // In a real-world scenario, this data would come from a database.
+import { type } from 'os';
+import * as z from 'zod';
+
 
 // --- DEVICES ---
 export type Device = {
@@ -368,6 +371,8 @@ export type Rack = {
     maxWeight?: number;
     weightUnit?: 'kg' | 'lb';
     mountingDepth?: number;
+    deviceCount: number;
+    spaceUtilization: number;
 };
 
 export const initialRacks: Rack[] = [
@@ -385,6 +390,8 @@ export const initialRacks: Rack[] = [
         tags: ['core', 'main-row'],
         facilityId: "DC-A1-101",
         tenantId: "tenant-a",
+        deviceCount: 12,
+        spaceUtilization: 71,
     },
     {
         id: 'rack-2',
@@ -398,6 +405,9 @@ export const initialRacks: Rack[] = [
         width: '19in',
         startingUnit: 1,
         tags: ['compute', 'expansion'],
+        tenantId: "tenant-a",
+        deviceCount: 0,
+        spaceUtilization: 0,
     },
     {
         id: 'rack-3',
@@ -408,6 +418,10 @@ export const initialRacks: Rack[] = [
         width: '19in',
         startingUnit: 1,
         tags: [],
+        roleId: 'role-3',
+        tenantId: 'tenant-b',
+        deviceCount: 4,
+        spaceUtilization: 25,
     },
 ];
 
