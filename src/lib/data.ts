@@ -1,23 +1,17 @@
 // This file contains all the mock data for the application.
 // In a real-world scenario, this data would come from a database.
 
-import { z } from "zod";
-
 // --- DEVICES ---
-
-const deviceSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    manufacturer: z.string().min(1, "Manufacturer is required"),
-    model: z.string().min(1, "Model is required"),
-    status: z.enum(["Online", "Offline", "Provisioning"]),
-    role: z.string().min(1, "Role is required"),
-    site: z.string().min(1, "Site is required"),
-    ip: z.string().ip({ message: "Invalid IP address" }),
-    tags: z.string().optional(),
-})
-
-type DeviceFormValues = z.infer<typeof deviceSchema>
-export type Device = Omit<DeviceFormValues, 'tags'> & { tags: string[] };
+export type Device = {
+    name: string;
+    manufacturer: string;
+    model: string;
+    status: "Online" | "Offline" | "Provisioning";
+    role: string;
+    site: string;
+    ip: string;
+    tags: string[];
+};
   
 export const initialDevices: Device[] = [
     {
@@ -176,8 +170,20 @@ export type Region = {
     tags: string[];
 }
 export const initialRegions: Region[] = [
-    { id: 'na', name: 'North America', description: 'All US and Canadian facilities', tags: ["amer"] },
-    { id: 'eu', name: 'Europe', description: 'European data centers and offices', tags: ["emea"] },
+    { id: 'na', name: 'North America', description: 'All US and Canadian facilities', tags: ["amer"], parentId: undefined },
+    { id: 'eu', name: 'Europe', description: 'European data centers and offices', tags: ["emea"], parentId: undefined },
+];
+
+// Site Groups
+export type SiteGroup = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+}
+export const initialSiteGroups: SiteGroup[] = [
+    { id: 'dc', name: 'Data Centers', slug: 'data-centers', description: 'Primary data center facilities' },
+    { id: 'office', name: 'Branch Offices', slug: 'branch-offices', description: 'Remote office locations' },
 ];
 
 // Sites
@@ -185,14 +191,35 @@ export type Site = {
     id: string;
     name: string;
     slug: string;
-    regionId: string;
-    facility: string;
-    address: string;
-    status: 'active' | 'offline' | 'planned';
+    status: 'active' | 'offline' | 'planned' | 'decommissioning';
+    regionId?: string;
+    groupId?: string;
+    facility?: string;
+    asns?: string;
+    timeZone?: string;
+    description?: string;
+    tags: string[];
+    tenantGroupId?: string;
+    tenantId?: string;
+    physicalAddress?: string;
+    shippingAddress?: string;
+    latitude?: number;
+    longitude?: number;
+    comments?: string;
 }
 export const initialSites: Site[] = [
-    { id: 'florim-tn', name: 'Florim TN Data Center', slug: 'florim-tn-dc', regionId: 'na', facility: 'Main DC', address: '123 Industrial Blvd, Clarksville, TN', status: 'active'},
-    { id: 'dub-office', name: 'Dublin Office', slug: 'dub-office', regionId: 'eu', facility: 'Branch Office', address: '456 Tech Way, Dublin, Ireland', status: 'planned'},
+    { id: 'florim-tn', name: 'Florim TN Data Center', slug: 'florim-tn-dc', regionId: 'na', status: 'active', groupId: 'dc', tags: ['primary'], latitude: 36.5297, longitude: -87.3595 },
+    { id: 'dub-office', name: 'Dublin Office', slug: 'dub-office', regionId: 'eu', status: 'planned', groupId: 'office', tags: [], latitude: 53.3498, longitude: -6.2603 },
+];
+
+export const timezones = [
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "Europe/London",
+    "Europe/Paris",
+    "Asia/Tokyo"
 ];
 
 // Locations
@@ -366,3 +393,5 @@ export type RackReservation = {
 export const initialRackReservations: RackReservation[] = [
     { id: 'res-1', rackId: 'rack-1', units: [40, 41], tenantId: 'tenant-a', description: 'Reserved for new core firewall' },
 ];
+
+    
