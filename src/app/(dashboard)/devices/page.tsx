@@ -76,7 +76,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { initialDevices, type Device } from "@/lib/data"
+import { initialDevices, initialSites, type Device } from "@/lib/data"
 
 const deviceSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -94,6 +94,7 @@ type DeviceFormValues = z.infer<typeof deviceSchema>
 export default function DevicesPage() {
   const { toast } = useToast()
   const [devices, setDevices] = useState<Device[]>(initialDevices)
+  const [sites] = useState(initialSites)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null)
@@ -277,9 +278,20 @@ export default function DevicesPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Site</FormLabel>
-                              <FormControl>
-                                <Input placeholder="e.g., Data Center A" {...field} />
-                              </FormControl>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                        <SelectValue placeholder="Select a site" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {sites.map((site) => (
+                                        <SelectItem key={site.id} value={site.name}>
+                                            {site.name}
+                                        </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                               <FormMessage />
                             </FormItem>
                           )}
