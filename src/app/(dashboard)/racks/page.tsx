@@ -1,99 +1,422 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import Rack from "@/components/rack"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
+"use client"
+
+import { useState } from "react"
+import { MoreHorizontal, PlusCircle } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { cn } from "@/lib/utils"
+
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
+import {
+  initialRacks,
+  initialSites,
+  initialLocations,
+  initialRackRoles,
+  initialRackTypes,
+  initialTenantGroups,
+  initialTenants,
+  type Rack,
+  type Site,
+  type Location,
+  type RackRole,
+  type RackType,
+  type TenantGroup,
+  type Tenant,
+} from "@/lib/data"
 import { Badge } from "@/components/ui/badge"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
 
-type DeviceInRack = { 
-    id: number;
-    name: string;
-    u: number;
-    height: number;
-    color: string;
-    role: string;
-}
+const rackSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  siteId: z.string().min(1, "Site is required"),
+  locationId: z.string().optional(),
+  status: z.enum(["active", "planned", "decommissioned"]),
+  roleId: z.string().optional(),
+  typeId: z.string().optional(),
+  description: z.string().optional(),
+  airflow: z.enum(["front-to-rear", "rear-to-front", "mixed", "passive"]).optional(),
+  tags: z.string().optional(),
+  facilityId: z.string().optional(),
+  serial: z.string().optional(),
+  assetTag: z.string().optional(),
+  tenantGroupId: z.string().optional(),
+  tenantId: z.string().optional(),
+  width: z.enum(["19in", "23in"]),
+  u_height: z.coerce.number().int().positive("Must be a positive number"),
+  startingUnit: z.coerce.number().int().min(1, "Starting unit must be at least 1"),
+  outerWidth: z.coerce.number().optional(),
+  outerHeight: z.coerce.number().optional(),
+  outerDepth: z.coerce.number().optional(),
+  outerUnit: z.enum(["mm", "in"]).optional(),
+  weight: z.coerce.number().optional(),
+  maxWeight: z.coerce.number().optional(),
+  weightUnit: z.enum(["kg", "lb"]).optional(),
+  mountingDepth: z.coerce.number().optional(),
+})
 
-type RackType = {
-    id: string;
-    status: 'active' | 'planned' | 'decommissioned';
-    role: string;
-    comments: string;
-    devices: DeviceInRack[];
-    uHeight?: number;
-}
-
-
-const SITE_A_RACKS: RackType[] = [
-    { 
-        id: "A101", 
-        status: 'active',
-        role: "Core Network",
-        comments: "Houses core switching and routing for Site A.",
-        devices: [
-            { id: 1, name: 'FIREWALL-01', u: 42, height: 1, color: 'bg-red-500', role: 'Firewall' },
-            { id: 2, name: 'CORE-SW-01', u: 40, height: 2, color: 'bg-indigo-500', role: 'Core Switch' },
-            { id: 3, name: 'ACCESS-SW-01', u: 38, height: 1, color: 'bg-blue-500', role: 'Access Switch' },
-            { id: 4, name: 'SERVER-WEB-01', u: 20, height: 2, color: 'bg-gray-600', role: 'Web Server' },
-            { id: 5, name: 'SERVER-DB-01', u: 18, height: 2, color: 'bg-gray-600', role: 'Database Server' },
-            { id: 6, name: 'UPS-A', u: 1, height: 3, color: 'bg-gray-800', role: 'UPS' },
-        ]
-    },
-    { 
-        id: "A102",
-        status: 'planned',
-        role: "Compute Expansion",
-        comments: "Future home for new virtualization cluster.",
-        devices: []
-    },
-    { 
-        id: "A103",
-        status: 'decommissioned',
-        role: "Legacy Storage",
-        comments: "To be removed in Q4.",
-        devices: []
-    },
-]
-
-const SITE_B_RACKS: RackType[] = [
-    { 
-        id: "B201",
-        status: 'active',
-        role: 'Edge & Virtualization',
-        comments: "Mixed-use rack for edge routing and VM hosts.",
-        devices: [
-            { id: 1, name: 'EDGE-RTR-02', u: 42, height: 2, color: 'bg-purple-500', role: 'Edge Router' },
-            { id: 2, name: 'TOR-SW-01', u: 22, height: 1, color: 'bg-green-500', role: 'ToR Switch' },
-            { id: 3, name: 'TOR-SW-02', u: 21, height: 1, color: 'bg-green-500', role: 'ToR Switch' },
-            { id: 4, name: 'SERVER-VM-HOST-01', u: 15, height: 4, color: 'bg-orange-500', role: 'VM Host' },
-            { id: 5, name: 'SERVER-VM-HOST-02', u: 11, height: 4, color: 'bg-orange-500', role: 'VM Host' },
-        ]
-    }
-]
+type RackFormValues = z.infer<typeof rackSchema>
 
 export default function RacksPage() {
+  const { toast } = useToast()
+  const [racks, setRacks] = useState<Rack[]>(initialRacks)
+  const [sites] = useState<Site[]>(initialSites)
+  const [locations] = useState<Location[]>(initialLocations)
+  const [rackRoles] = useState<RackRole[]>(initialRackRoles)
+  const [rackTypes] = useState<RackType[]>(initialRackTypes)
+  const [tenantGroups] = useState<TenantGroup[]>(initialTenantGroups)
+  const [tenants] = useState<Tenant[]>(initialTenants)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+
+  const form = useForm<RackFormValues>({
+    resolver: zodResolver(rackSchema),
+    defaultValues: {
+      status: "active",
+      width: "19in",
+      u_height: 42,
+      startingUnit: 1,
+      tags: "",
+    },
+  })
+
+  const watchedSiteId = form.watch("siteId")
+  const filteredLocations = locations.filter(l => l.siteId === watchedSiteId)
+
+  function onSubmit(data: RackFormValues) {
+    const newRack: Rack = {
+      id: `rack-${Date.now()}`,
+      ...data,
+      tags: data.tags ? data.tags.split(",").map(t => t.trim()) : [],
+    }
+    setRacks((prev) => [...prev, newRack])
+    toast({ title: "Success", description: "Rack has been created." })
+    setIsAddDialogOpen(false)
+    form.reset()
+  }
+
+  const handleDelete = (id: string) => {
+    setRacks((prev) => prev.filter((r) => r.id !== id))
+    toast({ title: "Success", description: "Rack has been deleted." })
+  }
+
+  const getSiteName = (siteId: string) => sites.find(s => s.id === siteId)?.name ?? "N/A"
+  const getRoleName = (roleId?: string) => rackRoles.find(r => r.id === roleId)?.name ?? "N/A"
+  
+  const getStatusBadge = (status: Rack['status']) => {
+    switch (status) {
+      case "active":
+        return <Badge className="capitalize bg-green-500/20 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-500/20">{status}</Badge>
+      case "planned":
+        return <Badge className="capitalize bg-blue-500/20 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-500/20">{status}</Badge>
+      case "decommissioned":
+        return <Badge variant="destructive" className="capitalize">{status}</Badge>
+      default:
+        return <Badge variant="outline" className="capitalize">{status}</Badge>
+    }
+}
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-            <CardTitle>Rack Elevations</CardTitle>
-            <CardDescription>Visualize device placement in data center racks.</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Racks</CardTitle>
+              <CardDescription>Manage data center and office racks.</CardDescription>
+            </div>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add Rack
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-4xl">
+                <DialogHeader>
+                  <DialogTitle>Add New Rack</DialogTitle>
+                  <DialogDescription>
+                    Fill in the details below to create a new rack.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <ScrollArea className="h-[60vh] pr-6">
+                      <div className="space-y-8">
+                        <div>
+                          <h3 className="text-lg font-medium">Location</h3>
+                          <Separator className="my-2" />
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                             <FormField control={form.control} name="siteId" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Site</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a site" /></SelectTrigger></FormControl>
+                                    <SelectContent>{sites.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField control={form.control} name="locationId" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Location</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedSiteId}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a location" /></SelectTrigger></FormControl>
+                                    <SelectContent>{filteredLocations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}</SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-medium">Rack Details</h3>
+                          <Separator className="my-2" />
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                            <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Name</FormLabel> <FormControl><Input placeholder="e.g., A101" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                            <FormField control={form.control} name="status" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Status</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="planned">Planned</SelectItem>
+                                    <SelectItem value="decommissioned">Decommissioned</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="roleId" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Role</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl><SelectTrigger><SelectValue placeholder="Select a role" /></SelectTrigger></FormControl>
+                                  <SelectContent>{rackRoles.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}/>
+                          </div>
+                           <FormField control={form.control} name="typeId" render={({ field }) => (
+                              <FormItem className="mt-4">
+                                <FormLabel>Rack Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl><SelectTrigger><SelectValue placeholder="Select a pre-defined type" /></SelectTrigger></FormControl>
+                                  <SelectContent>{rackTypes.map(t => <SelectItem key={t.id} value={t.id}>{t.manufacturer} {t.model}</SelectItem>)}</SelectContent>
+                                </Select>
+                                <FormDescription>Select a pre-defined rack type, or set physical characteristics below.</FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}/>
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-4">
+                             <FormField control={form.control} name="airflow" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Airflow</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select airflow" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="front-to-rear">Front-to-rear</SelectItem>
+                                      <SelectItem value="rear-to-front">Rear-to-front</SelectItem>
+                                      <SelectItem value="mixed">Mixed</SelectItem>
+                                      <SelectItem value="passive">Passive</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="tags" render={({ field }) => ( <FormItem> <FormLabel>Tags</FormLabel> <FormControl><Input placeholder="e.g., critical, core" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                          </div>
+                          <FormField control={form.control} name="description" render={({ field }) => ( <FormItem className="mt-4"> <FormLabel>Description</FormLabel> <FormControl><Textarea placeholder="A brief description of the rack." {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                        </div>
+
+                         <div>
+                          <h3 className="text-lg font-medium">Inventory Control</h3>
+                          <Separator className="my-2" />
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                             <FormField control={form.control} name="facilityId" render={({ field }) => ( <FormItem> <FormLabel>Facility ID</FormLabel> <FormControl><Input placeholder="e.g., A1-01" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                             <FormField control={form.control} name="serial" render={({ field }) => ( <FormItem> <FormLabel>Serial Number</FormLabel> <FormControl><Input placeholder="e.g., SN12345" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                             <FormField control={form.control} name="assetTag" render={({ field }) => ( <FormItem> <FormLabel>Asset Tag</FormLabel> <FormControl><Input placeholder="e.g., AT67890" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                           </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-medium">Tenancy</h3>
+                          <Separator className="my-2" />
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                             <FormField control={form.control} name="tenantGroupId" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Tenant Group</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a group" /></SelectTrigger></FormControl>
+                                    <SelectContent>{tenantGroups.map(tg => <SelectItem key={tg.id} value={tg.id}>{tg.name}</SelectItem>)}</SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                            )}/>
+                            <FormField control={form.control} name="tenantId" render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Tenant</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Select a tenant" /></SelectTrigger></FormControl>
+                                    <SelectContent>{tenants.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                            )}/>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-medium">Dimensions</h3>
+                          <Separator className="my-2" />
+                          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                            <FormField control={form.control} name="width" render={({ field }) => (
+                              <FormItem><FormLabel>Width</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                  <SelectContent><SelectItem value="19in">19 inches</SelectItem><SelectItem value="23in">23 inches</SelectItem></SelectContent>
+                                </Select><FormMessage />
+                              </FormItem>
+                            )}/>
+                             <FormField control={form.control} name="u_height" render={({ field }) => ( <FormItem> <FormLabel>Height (U)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                             <FormField control={form.control} name="startingUnit" render={({ field }) => ( <FormItem> <FormLabel>Starting Unit</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                          </div>
+                           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mt-4">
+                              <FormField control={form.control} name="outerWidth" render={({ field }) => ( <FormItem> <FormLabel>Outer Width</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                              <FormField control={form.control} name="outerHeight" render={({ field }) => ( <FormItem> <FormLabel>Outer Height</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                              <FormField control={form.control} name="outerDepth" render={({ field }) => ( <FormItem> <FormLabel>Outer Depth</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                              <FormField control={form.control} name="outerUnit" render={({ field }) => (
+                                <FormItem><FormLabel>Outer Unit</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Unit"/></SelectTrigger></FormControl>
+                                    <SelectContent><SelectItem value="mm">mm</SelectItem><SelectItem value="in">in</SelectItem></SelectContent>
+                                  </Select><FormMessage />
+                                </FormItem>
+                              )}/>
+                           </div>
+                           <div className="grid grid-cols-1 sm:grid-cols-2 mt-4">
+                            <FormField control={form.control} name="mountingDepth" render={({ field }) => ( <FormItem> <FormLabel>Mounting Depth</FormLabel> <FormControl><Input type="number" placeholder="e.g., 750" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                           </div>
+                        </div>
+
+                         <div>
+                          <h3 className="text-lg font-medium">Weight</h3>
+                          <Separator className="my-2" />
+                          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                              <FormField control={form.control} name="weight" render={({ field }) => ( <FormItem> <FormLabel>Weight</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                              <FormField control={form.control} name="maxWeight" render={({ field }) => ( <FormItem> <FormLabel>Max Weight</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                              <FormField control={form.control} name="weightUnit" render={({ field }) => (
+                                <FormItem><FormLabel>Weight Unit</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Unit"/></SelectTrigger></FormControl>
+                                    <SelectContent><SelectItem value="kg">kg</SelectItem><SelectItem value="lb">lb</SelectItem></SelectContent>
+                                  </Select><FormMessage />
+                                </FormItem>
+                              )}/>
+                           </div>
+                        </div>
+                      </div>
+                    </ScrollArea>
+                    <DialogFooter className="pt-6">
+                      <Button type="button" variant="ghost" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                      <Button type="submit">Create Rack</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Site</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>U Height</TableHead>
+                <TableHead>Devices</TableHead>
+                <TableHead><span className="sr-only">Actions</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {racks.map((rack) => (
+                <TableRow key={rack.id}>
+                  <TableCell className="font-medium">{rack.name}</TableCell>
+                  <TableCell>{getSiteName(rack.siteId)}</TableCell>
+                  <TableCell>{getStatusBadge(rack.status)}</TableCell>
+                  <TableCell>{getRoleName(rack.roleId)}</TableCell>
+                  <TableCell>{rack.u_height}U</TableCell>
+                  <TableCell>0</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem>View Elevation</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(rack.id)}>Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
       </Card>
-      <Tabs defaultValue="site-a">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="site-a">Data Center A</TabsTrigger>
-          <TabsTrigger value="site-b">Data Center B</TabsTrigger>
-        </TabsList>
-        <TabsContent value="site-a" className="mt-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {SITE_A_RACKS.map(rack => <Rack key={rack.id} rack={rack} />)}
-          </div>
-        </TabsContent>
-        <TabsContent value="site-b" className="mt-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {SITE_B_RACKS.map(rack => <Rack key={rack.id} rack={rack} />)}
-          </div>
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }

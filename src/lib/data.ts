@@ -1,3 +1,4 @@
+
 // This file contains all the mock data for the application.
 // In a real-world scenario, this data would come from a database.
 
@@ -206,6 +207,19 @@ export const initialLocations: Location[] = [
     { id: 'tn-dc-room-2', name: 'Meet-Me-Room', siteId: 'florim-tn', description: 'Carrier interconnect room'},
 ];
 
+// Tenant Groups
+export type TenantGroup = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+}
+export const initialTenantGroups: TenantGroup[] = [
+    { id: 'tg-1', name: 'Corporate', slug: 'corporate', description: 'Corporate Tenants' },
+    { id: 'tg-2', name: 'External Customers', slug: 'external-customers', description: 'External Customer Tenants' },
+];
+
+
 // Tenants
 export type Tenant = {
     id: string;
@@ -215,8 +229,8 @@ export type Tenant = {
     groupId?: string;
 }
 export const initialTenants: Tenant[] = [
-    { id: 'tenant-a', name: 'Internal Services', slug: 'internal-services', description: 'Company-internal applications and infrastructure' },
-    { id: 'tenant-b', name: 'Customer Hosting', slug: 'customer-hosting', description: 'Shared hosting platform for external customers' },
+    { id: 'tenant-a', name: 'Internal Services', slug: 'internal-services', groupId: 'tg-1', description: 'Company-internal applications and infrastructure' },
+    { id: 'tenant-b', name: 'Customer Hosting', slug: 'customer-hosting', groupId: 'tg-2', description: 'Shared hosting platform for external customers' },
 ];
 
 // Contacts
@@ -262,15 +276,70 @@ export type Rack = {
     id: string;
     name: string;
     siteId: string;
+    locationId?: string;
     status: 'active' | 'planned' | 'decommissioned';
     roleId?: string;
     typeId?: string;
+    description?: string;
+    airflow?: 'front-to-rear' | 'rear-to-front' | 'mixed' | 'passive';
+    tags: string[];
+    facilityId?: string;
+    serial?: string;
+    assetTag?: string;
+    tenantGroupId?: string;
+    tenantId?: string;
+    width: '19in' | '23in';
+    startingUnit: number;
     u_height: number;
+    outerWidth?: number;
+    outerHeight?: number;
+    outerDepth?: number;
+    outerUnit?: 'mm' | 'in';
+    weight?: number;
+    maxWeight?: number;
+    weightUnit?: 'kg' | 'lb';
+    mountingDepth?: number;
 };
+
 export const initialRacks: Rack[] = [
-    { id: 'rack-1', name: 'A101', siteId: 'florim-tn', roleId: 'role-1', typeId: 'type-1', status: 'active', u_height: 42 },
-    { id: 'rack-2', name: 'A102', siteId: 'florim-tn', roleId: 'role-2', typeId: 'type-1', status: 'planned', u_height: 42 },
-    { id: 'rack-3', name: 'B201', siteId: 'dub-office', status: 'active', u_height: 48 },
+    {
+        id: 'rack-1',
+        name: 'A101',
+        siteId: 'florim-tn',
+        locationId: 'tn-dc-room-1',
+        roleId: 'role-1',
+        typeId: 'type-1',
+        status: 'active',
+        u_height: 42,
+        width: '19in',
+        startingUnit: 1,
+        tags: ['core', 'main-row'],
+        facilityId: "DC-A1-101",
+        tenantId: "tenant-a",
+    },
+    {
+        id: 'rack-2',
+        name: 'A102',
+        siteId: 'florim-tn',
+        locationId: 'tn-dc-room-1',
+        roleId: 'role-2',
+        typeId: 'type-1',
+        status: 'planned',
+        u_height: 42,
+        width: '19in',
+        startingUnit: 1,
+        tags: ['compute', 'expansion'],
+    },
+    {
+        id: 'rack-3',
+        name: 'B201',
+        siteId: 'dub-office',
+        status: 'active',
+        u_height: 48,
+        width: '19in',
+        startingUnit: 1,
+        tags: [],
+    },
 ];
 
 export type RackReservation = {
@@ -283,3 +352,4 @@ export type RackReservation = {
 export const initialRackReservations: RackReservation[] = [
     { id: 'res-1', rackId: 'rack-1', units: [40, 41], tenantId: 'tenant-a', description: 'Reserved for new core firewall' },
 ];
+
