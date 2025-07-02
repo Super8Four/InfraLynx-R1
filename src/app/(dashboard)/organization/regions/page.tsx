@@ -73,7 +73,7 @@ export default function RegionsPage() {
 
   const form = useForm<RegionFormValues>({
     resolver: zodResolver(regionSchema),
-    defaultValues: { name: "", slug: "", parentId: "", description: "", tags: "" },
+    defaultValues: { name: "", slug: "", parentId: "none", description: "", tags: "" },
   })
 
   function onSubmit(data: RegionFormValues) {
@@ -81,7 +81,7 @@ export default function RegionsPage() {
       id: `region-${Date.now()}`,
       name: data.name,
       slug: data.slug,
-      parentId: data.parentId || undefined,
+      parentId: data.parentId === 'none' ? undefined : data.parentId,
       description: data.description || "",
       tags: data.tags ? data.tags.split(",").map((tag) => tag.trim()) : [],
     }
@@ -102,7 +102,7 @@ export default function RegionsPage() {
   }
   
   const getRegionName = (regionId?: string) => {
-    if (!regionId) return '—'
+    if (!regionId || regionId === 'none') return '—'
     return regions.find(r => r.id === regionId)?.name || 'Unknown'
   }
 
@@ -141,7 +141,7 @@ export default function RegionsPage() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">None</SelectItem>
+                              <SelectItem value="none">None</SelectItem>
                               {regions.map((region) => (
                                 <SelectItem key={region.id} value={region.id}>
                                   {region.name}
