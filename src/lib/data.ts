@@ -231,3 +231,55 @@ export const initialContacts: Contact[] = [
     { id: 'contact-1', name: 'John Doe', email: 'j.doe@example.com', phone: '123-456-7890', title: 'Network Engineer' },
     { id: 'contact-2', name: 'Jane Smith', email: 'j.smith@example.com', phone: '098-765-4321', title: 'Data Center Manager' },
 ];
+
+
+// --- RACKS ---
+export type RackRole = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+};
+export const initialRackRoles: RackRole[] = [
+    { id: 'role-1', name: 'Core Network', slug: 'core-network', description: 'For core switches and routers' },
+    { id: 'role-2', name: 'Compute', slug: 'compute', description: 'For servers and virtualization hosts' },
+    { id: 'role-3', name: 'Storage', slug: 'storage', description: 'For SAN/NAS equipment' },
+];
+
+export type RackType = {
+    id: string;
+    manufacturer: string;
+    model: string;
+    u_height: number;
+    width: '19in' | '23in';
+};
+export const initialRackTypes: RackType[] = [
+    { id: 'type-1', manufacturer: 'APC', model: 'AR3100', u_height: 42, width: '19in' },
+    { id: 'type-2', manufacturer: 'Dell', model: 'PowerEdge 4220', u_height: 42, width: '19in' },
+];
+
+export type Rack = {
+    id: string;
+    name: string;
+    siteId: string;
+    status: 'active' | 'planned' | 'decommissioned';
+    roleId?: string;
+    typeId?: string;
+    u_height: number;
+};
+export const initialRacks: Rack[] = [
+    { id: 'rack-1', name: 'A101', siteId: 'florim-tn', roleId: 'role-1', typeId: 'type-1', status: 'active', u_height: 42 },
+    { id: 'rack-2', name: 'A102', siteId: 'florim-tn', roleId: 'role-2', typeId: 'type-1', status: 'planned', u_height: 42 },
+    { id: 'rack-3', name: 'B201', siteId: 'dub-office', status: 'active', u_height: 48 },
+];
+
+export type RackReservation = {
+    id: string;
+    rackId: string;
+    units: number[];
+    tenantId: string;
+    description: string;
+};
+export const initialRackReservations: RackReservation[] = [
+    { id: 'res-1', rackId: 'rack-1', units: [40, 41], tenantId: 'tenant-a', description: 'Reserved for new core firewall' },
+];

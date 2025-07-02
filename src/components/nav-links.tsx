@@ -31,7 +31,10 @@ import {
   Group,
   Contact,
   ClipboardList,
-  UserCheck
+  UserCheck,
+  Tag,
+  Package,
+  Bookmark
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -50,7 +53,6 @@ import {
 
 const mainNavItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/racks", label: "Racks", icon: Server },
   { href: "/devices", label: "Devices", icon: HardDrive },
   { href: "/cabling", label: "Connections", icon: Cable },
   { href: "/wireless", label: "Wireless", icon: Wifi },
@@ -85,11 +87,20 @@ const organizationLinks = {
   ],
 };
 
+const rackLinks = [
+    { href: "/racks", label: "Racks", icon: Server },
+    { href: "/racks/elevations", label: "Elevations", icon: Layers },
+    { href: "/racks/roles", label: "Rack Roles", icon: Tag },
+    { href: "/racks/types", label: "Rack Types", icon: Package },
+    { href: "/racks/reservations", label: "Reservations", icon: Bookmark },
+]
+
 
 export function NavLinks() {
   const pathname = usePathname()
   const [openSections, setOpenSections] = React.useState({
     organization: pathname.startsWith('/organization'),
+    racks: pathname.startsWith('/racks'),
     sites: pathname.startsWith('/organization/'),
     tenancy: pathname.startsWith('/organization/'),
     contacts: pathname.startsWith('/organization/'),
@@ -112,26 +123,6 @@ export function NavLinks() {
       </SidebarMenuItem>
     )
   }
-
-  const CollapsibleSection = ({ title, sectionKey, children, icon: Icon }: { title: string, sectionKey: keyof typeof openSections, children: React.ReactNode, icon: React.ElementType }) => (
-    <Collapsible open={openSections[sectionKey]} onOpenChange={() => toggleSection(sectionKey)}>
-        <CollapsibleTrigger asChild>
-            <SidebarMenuButton className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                    <Icon className="h-4 w-4" />
-                    <span>{title}</span>
-                </span>
-                <ChevronRight className={cn("h-4 w-4 transition-transform", openSections[sectionKey] && "rotate-90")} />
-            </SidebarMenuButton>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pl-4">
-            <SidebarMenu>
-                {children}
-            </SidebarMenu>
-        </CollapsibleContent>
-    </Collapsible>
-  )
-
 
   return (
     <SidebarMenu>
@@ -158,6 +149,22 @@ export function NavLinks() {
              {organizationLinks.contacts.map(item => <NavLink key={item.label} {...item} isSubItem />)}
         </CollapsibleContent>
     </Collapsible>
+    
+    <Collapsible open={openSections.racks} onOpenChange={() => toggleSection('racks')}>
+        <CollapsibleTrigger asChild>
+            <SidebarMenuButton className="w-full justify-between">
+                <span className="flex items-center gap-2">
+                    <Server className="h-4 w-4" />
+                    <span>Racks</span>
+                </span>
+                <ChevronRight className={cn("h-4 w-4 transition-transform", openSections.racks && "rotate-90")} />
+            </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pl-4 pt-1 space-y-1">
+            {rackLinks.map(item => <NavLink key={item.label} {...item} isSubItem />)}
+        </CollapsibleContent>
+    </Collapsible>
+
 
       {mainNavItems.slice(1).map((item) => {
         const isActive =
