@@ -2,7 +2,23 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Cable, Network, Server, Router } from "lucide-react"
+import {
+  LayoutDashboard,
+  Building2,
+  Server,
+  Cable,
+  Wifi,
+  Network,
+  ShieldCheck,
+  Layers,
+  CircuitBoard,
+  Plug,
+  PackageCheck,
+  Settings2,
+  GitMerge,
+  GitBranch,
+  UserCog,
+} from "lucide-react"
 
 import {
   SidebarMenu,
@@ -12,10 +28,20 @@ import {
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/organization", label: "Org", icon: Building2 },
   { href: "/racks", label: "Racks", icon: Server },
+  { href: "/cabling", label: "Connections", icon: Cable },
+  { href: "/wireless", label: "Wireless", icon: Wifi },
   { href: "/ipam", label: "IPAM", icon: Network },
-  { href: "/cabling", label: "Cabling", icon: Cable },
-  { href: "/devices", label: "Devices", icon: Router },
+  { href: "/vpn", label: "VPN", icon: ShieldCheck },
+  { href: "/virtualization", label: "Virtualization", icon: Layers },
+  { href: "/circuits", label: "Circuits", icon: CircuitBoard },
+  { href: "/power", label: "Power", icon: Plug },
+  { href: "/provisioning", label: "Provisioning", icon: PackageCheck },
+  { href: "/operations", label: "Operations", icon: Settings2 },
+  { href: "/topology", label: "Topology", icon: GitMerge },
+  { href: "/branching", label: "Branching", icon: GitBranch },
+  { href: "/admin", label: "Admin", icon: UserCog },
 ]
 
 export function NavLinks() {
