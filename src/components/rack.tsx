@@ -7,6 +7,7 @@ type Device = {
   u: number
   height: number
   color: string
+  role?: string
 }
 
 type RackProps = {
