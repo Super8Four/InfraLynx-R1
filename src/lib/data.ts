@@ -1,7 +1,6 @@
 
 // This file contains all the mock data for the application.
 // In a real-world scenario, this data would come from a database.
-import { type } from 'os';
 import * as z from 'zod';
 
 
