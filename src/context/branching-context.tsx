@@ -32,9 +32,9 @@ const initialBranches: Branch[] = [
 ]
 
 const initialCommits: Commit[] = [
-  { id: 'c1', message: "Initial commit", branch: "main", author: "system", timestamp: "3 days ago" },
   { id: 'c2', message: "Add core networking devices", branch: "main", author: "admin", timestamp: "2 days ago" },
-]
+  { id: 'c1', message: "Initial commit", branch: "main", author: "system", timestamp: "3 days ago" },
+].reverse() // Newest first
 
 const BranchingContext = createContext<BranchingContextType | undefined>(undefined);
 
@@ -72,34 +72,45 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
 
   const mergeActiveBranch = () => {
     const currentBranch = branches.find(b => b.id === activeBranch);
-    if (!currentBranch || currentBranch.name === 'main') return;
+    if (!currentBranch || currentBranch.name === 'main' || currentBranch.merged) return;
 
-    const newCommits: Commit[] = [
-        {
-            id: `c${commits.length + 1}`,
-            message: `feat: Add new DC site in Dublin`,
-            branch: currentBranch.name,
-            author: 'admin',
-            timestamp: 'Just now'
-        },
-        {
-            id: `c${commits.length + 2}`,
-            message: `fix: Update firewall rules for new site`,
-            branch: currentBranch.name,
-            author: 'admin',
-            timestamp: 'Just now'
-        },
-        {
-            id: `c${commits.length + 3}`,
-            message: `merge: Merge branch '${currentBranch.name}' into '${currentBranch.from}'`,
-            branch: currentBranch.from,
-            author: 'admin',
-            timestamp: 'Just now'
-        },
-    ]
+    // Simulate work being done on the feature branch. These are added as if they happened before the merge.
+    const simulatedWork: Omit<Commit, 'id' | 'timestamp'>[] = [
+      {
+        message: `feat: Add new DC site in Dublin`,
+        branch: currentBranch.name,
+        author: 'admin',
+      },
+      {
+        message: `fix: Update firewall rules for new site`,
+        branch: currentBranch.name,
+        author: 'admin',
+      },
+    ];
 
+    let commitIdCounter = commits.length;
+    
+    // Create new commits for the feature branch. Newest first.
+    const featureCommits: Commit[] = simulatedWork.reverse().map(work => ({
+      ...work,
+      id: `c${++commitIdCounter}`,
+      timestamp: 'Just now'
+    }));
+
+    // Create the merge commit, which is the newest of all.
+    const mergeCommit: Commit = {
+      id: `c${++commitIdCounter}`,
+      message: `merge: Merge branch '${currentBranch.name}' into '${currentBranch.from}'`,
+      branch: currentBranch.from,
+      author: 'admin',
+      timestamp: 'Just now'
+    };
+
+    // Prepend all new commits to the history (newest first).
+    setCommits(prev => [mergeCommit, ...featureCommits, ...prev]);
+
+    // Mark branch as merged and switch to parent branch.
     setBranches(prev => prev.map(b => b.id === activeBranch ? { ...b, merged: true } : b));
-    setCommits(prev => [newCommits.slice(0, 2).reverse(), {id: newCommits[2].id, message: newCommits[2].message, branch: newCommits[2].branch, author: newCommits[2].author, timestamp: newCommits[2].timestamp}, ...prev.slice(1)].flat());
     setActiveBranch(currentBranch.from);
     toast({ title: "Merge Successful", description: `Branch '${currentBranch.name}' has been merged into '${currentBranch.from}'.`})
   }
