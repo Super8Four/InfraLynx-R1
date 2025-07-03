@@ -76,15 +76,22 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { initialDevices, initialSites, type Device } from "@/lib/data"
+import { 
+    initialDevices, 
+    initialSites, 
+    initialDeviceRoles,
+    initialDeviceTypes,
+    initialPlatforms,
+    type Device 
+} from "@/lib/data"
 
 const deviceSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  manufacturer: z.string().min(1, "Manufacturer is required"),
-  model: z.string().min(1, "Model is required"),
+  deviceTypeId: z.string().min(1, "Device Type is required"),
+  deviceRoleId: z.string().min(1, "Role is required"),
+  platformId: z.string().optional(),
   status: z.enum(["Online", "Offline", "Provisioning"]),
-  role: z.string().min(1, "Role is required"),
-  site: z.string().min(1, "Site is required"),
+  siteId: z.string().min(1, "Site is required"),
   ip: z.string().ip({ message: "Invalid IP address" }),
   tags: z.string().optional(),
 })
@@ -95,6 +102,10 @@ export default function DevicesPage() {
   const { toast } = useToast()
   const [devices, setDevices] = useState<Device[]>(initialDevices)
   const [sites] = useState(initialSites)
+  const [deviceTypes] = useState(initialDeviceTypes)
+  const [deviceRoles] = useState(initialDeviceRoles)
+  const [platforms] = useState(initialPlatforms)
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null)
@@ -103,11 +114,8 @@ export default function DevicesPage() {
     resolver: zodResolver(deviceSchema),
     defaultValues: {
       name: "",
-      manufacturer: "",
-      model: "",
       status: "Provisioning",
-      role: "",
-      site: "",
+      siteId: "",
       ip: "",
       tags: "",
     },
@@ -153,6 +161,10 @@ export default function DevicesPage() {
         return <Badge variant="outline">{status}</Badge>
     }
   }
+
+  const getDeviceType = (id: string) => deviceTypes.find(t => t.id === id);
+  const getDeviceRole = (id: string) => deviceRoles.find(r => r.id === id);
+  const getSiteName = (id: string) => sites.find(s => s.id === id)?.name ?? 'N/A';
 
   return (
     <>
@@ -229,15 +241,26 @@ export default function DevicesPage() {
                             </FormItem>
                           )}
                         />
-                        <FormField
+                         <FormField
                           control={form.control}
-                          name="role"
+                          name="deviceRoleId"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Role</FormLabel>
-                              <FormControl>
-                                <Input placeholder="e.g., Core Switch" {...field} />
-                              </FormControl>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                        <SelectValue placeholder="Select a role" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {deviceRoles.map((role) => (
+                                        <SelectItem key={role.id} value={role.id}>
+                                            {role.name}
+                                        </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -246,26 +269,48 @@ export default function DevicesPage() {
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <FormField
                           control={form.control}
-                          name="manufacturer"
+                          name="deviceTypeId"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Manufacturer</FormLabel>
-                              <FormControl>
-                                <Input placeholder="e.g., Cisco" {...field} />
-                              </FormControl>
+                              <FormLabel>Device Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                        <SelectValue placeholder="Select a type" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {deviceTypes.map((type) => (
+                                        <SelectItem key={type.id} value={type.id}>
+                                            {type.manufacturer} - {type.model}
+                                        </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                         <FormField
+                        <FormField
                           control={form.control}
-                          name="model"
+                          name="platformId"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Model</FormLabel>
-                              <FormControl>
-                                <Input placeholder="e.g., ASR1001-X" {...field} />
-                              </FormControl>
+                              <FormLabel>Platform (Optional)</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                        <SelectValue placeholder="Select a platform" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {platforms.map((platform) => (
+                                        <SelectItem key={platform.id} value={platform.id}>
+                                            {platform.name}
+                                        </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -274,7 +319,7 @@ export default function DevicesPage() {
                       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                          <FormField
                           control={form.control}
-                          name="site"
+                          name="siteId"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Site</FormLabel>
@@ -286,7 +331,7 @@ export default function DevicesPage() {
                                     </FormControl>
                                     <SelectContent>
                                         {sites.map((site) => (
-                                        <SelectItem key={site.id} value={site.name}>
+                                        <SelectItem key={site.id} value={site.id}>
                                             {site.name}
                                         </SelectItem>
                                         ))}
@@ -377,17 +422,21 @@ export default function DevicesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {devices.map((device) => (
+              {devices.map((device) => {
+                const deviceType = getDeviceType(device.deviceTypeId);
+                const deviceRole = getDeviceRole(device.deviceRoleId);
+                const siteName = getSiteName(device.siteId);
+                return (
                 <TableRow key={device.name}>
                   <TableCell className="font-medium">{device.name}</TableCell>
                   <TableCell>{getStatusBadge(device.status)}</TableCell>
-                  <TableCell className="hidden md:table-cell">{device.manufacturer}</TableCell>
-                  <TableCell className="hidden md:table-cell">{device.model}</TableCell>
+                  <TableCell className="hidden md:table-cell">{deviceType?.manufacturer ?? 'N/A'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{deviceType?.model ?? 'N/A'}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {device.role}
+                    {deviceRole?.name ?? 'N/A'}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {device.site}
+                    {siteName}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell font-mono">
                     {device.ip}
@@ -424,7 +473,7 @@ export default function DevicesPage() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )})}
             </TableBody>
           </Table>
         </CardContent>

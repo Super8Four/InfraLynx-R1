@@ -34,7 +34,10 @@ import {
   UserCheck,
   Tag,
   Package,
-  Bookmark
+  Bookmark,
+  Settings,
+  Combine,
+  Component,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -53,7 +56,7 @@ import {
 
 const mainNavItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/devices", label: "Devices", icon: HardDrive },
+  // { href: "/devices", label: "Devices", icon: HardDrive },
   { href: "/cabling", label: "Connections", icon: Cable },
   { href: "/wireless", label: "Wireless", icon: Wifi },
   { href: "/ipam", label: "IPAM", icon: Network },
@@ -98,12 +101,22 @@ const rackLinks = [
     { href: "/racks/reservations", label: "Reservations", icon: Bookmark },
 ]
 
+const deviceLinks = [
+    { href: "/devices", label: "Devices", icon: HardDrive },
+    { href: "/devices/types", label: "Device Types", icon: Package },
+    { href: "/devices/roles", label: "Device Roles", icon: Tag },
+    { href: "/devices/platforms", label: "Platforms", icon: Settings },
+    { href: "/devices/virtual-chassis", label: "Virtual Chassis", icon: Combine },
+    { href: "/devices/modules", label: "Modules", icon: Component },
+];
+
 
 export function NavLinks() {
   const pathname = usePathname()
   const [openSections, setOpenSections] = React.useState({
     organization: pathname.startsWith('/organization'),
     racks: pathname.startsWith('/racks'),
+    devices: pathname.startsWith('/devices'),
     sites: pathname.startsWith('/organization/'),
     tenancy: pathname.startsWith('/organization/'),
     contacts: pathname.startsWith('/organization/'),
@@ -171,8 +184,25 @@ export function NavLinks() {
         </CollapsibleContent>
     </Collapsible>
 
+     <Collapsible open={openSections.devices} onOpenChange={() => toggleSection('devices')}>
+        <CollapsibleTrigger asChild>
+            <SidebarMenuButton className="w-full justify-between">
+                <span className="flex items-center gap-2">
+                    <HardDrive className="h-4 w-4" />
+                    <span>Devices</span>
+                </span>
+                <ChevronRight className={cn("h-4 w-4 transition-transform", openSections.devices && "rotate-90")} />
+            </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="pl-4 pt-1 space-y-1">
+            {deviceLinks.map(item => <NavLink key={item.label} {...item} isSubItem />)}
+        </CollapsibleContent>
+    </Collapsible>
+
 
       {mainNavItems.slice(1).map((item) => {
+        if (item.href.startsWith('/devices')) return null;
+
         const isActive =
           item.href === "/"
             ? pathname === item.href
