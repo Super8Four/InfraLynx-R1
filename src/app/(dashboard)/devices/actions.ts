@@ -5,6 +5,10 @@ import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 
+// Note: The createDevice and deleteDevice functions are now handled
+// by the client-side branching context. They are left here as a reference
+// for a non-branched implementation.
+
 const deviceSchema = z.object({
   name: z.string().min(1, "Name is required"),
   deviceRoleId: z.string().min(1, "Role is required"),
@@ -33,52 +37,52 @@ const deviceSchema = z.object({
   vcPriority: z.coerce.number().optional().nullable(),
 })
 
-export async function createDevice(data: unknown) {
-  try {
-    const validatedData = deviceSchema.parse(data);
-    const { ip, ...restOfData } = validatedData;
+// export async function createDevice(data: unknown) {
+//   try {
+//     const validatedData = deviceSchema.parse(data);
+//     const { ip, ...restOfData } = validatedData;
     
-    const deviceData = {
-        ...restOfData,
-        ip: ip || null,
-        tags: validatedData.tags ? validatedData.tags.split(",").map((t) => t.trim()) : [],
-    }
+//     const deviceData = {
+//         ...restOfData,
+//         ip: ip || null,
+//         tags: validatedData.tags ? validatedData.tags.split(",").map((t) => t.trim()) : [],
+//     }
 
-    const newDevice = await prisma.device.create({
-        data: {
-          ...deviceData,
-          id: `dev-${Date.now()}`, // Generate an ID
-        },
-        include: {
-            deviceRole: true,
-            site: true,
-        }
-    });
+//     const newDevice = await prisma.device.create({
+//         data: {
+//           ...deviceData,
+//           id: `dev-${Date.now()}`, // Generate an ID
+//         },
+//         include: {
+//             deviceRole: true,
+//             site: true,
+//         }
+//     });
 
-    revalidatePath('/devices');
-    return { success: true, newDevice };
+//     revalidatePath('/devices');
+//     return { success: true, newDevice };
 
-  } catch (e) {
-      console.error(e);
-      if (e instanceof z.ZodError) {
-        return { success: false, message: "Invalid data provided.", errors: e.errors };
-      }
-      return { success: false, message: "Failed to create device." };
-  }
-}
+//   } catch (e) {
+//       console.error(e);
+//       if (e instanceof z.ZodError) {
+//         return { success: false, message: "Invalid data provided.", errors: e.errors };
+//       }
+//       return { success: false, message: "Failed to create device." };
+//   }
+// }
 
-export async function deleteDevice(deviceId: string) {
-    try {
-        await prisma.device.delete({
-            where: { id: deviceId },
-        });
-        revalidatePath('/devices');
-        return { success: true };
-    } catch (e) {
-        console.error(e);
-        return { success: false, message: "Failed to delete device." };
-    }
-}
+// export async function deleteDevice(deviceId: string) {
+//     try {
+//         await prisma.device.delete({
+//             where: { id: deviceId },
+//         });
+//         revalidatePath('/devices');
+//         return { success: true };
+//     } catch (e) {
+//         console.error(e);
+//         return { success: false, message: "Failed to delete device." };
+//     }
+// }
 
 export async function uploadConfigBackup(data: unknown) {
   const uploadSchema = z.object({

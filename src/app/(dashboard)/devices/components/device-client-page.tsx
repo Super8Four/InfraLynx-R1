@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
   MoreHorizontal,
   PlusCircle,
@@ -82,27 +82,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
-import { createDevice, deleteDevice } from "../actions"
-import type { Site, DeviceType, DeviceRole, Platform, Location, Rack, Cluster, Tenant, TenantGroup, VirtualChassis, Device } from "@prisma/client"
-
-type EnrichedDevice = Device & {
-    deviceRole: DeviceRole | null;
-    site: Site | null;
-}
-
-interface DeviceClientPageProps {
-    initialDevices: EnrichedDevice[];
-    sites: Site[];
-    deviceTypes: DeviceType[];
-    deviceRoles: DeviceRole[];
-    platforms: Platform[];
-    locations: Location[];
-    racks: Rack[];
-    clusters: Cluster[];
-    tenants: Tenant[];
-    tenantGroups: TenantGroup[];
-    virtualChassis: VirtualChassis[];
-}
+import { useBranching } from "@/context/branching-context"
+import { Skeleton } from "@/components/ui/skeleton"
+import type { Device } from "@prisma/client"
 
 const deviceSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -114,45 +96,40 @@ const deviceSchema = z.object({
   serial: z.string().optional(),
   assetTag: z.string().optional(),
   siteId: z.string().min(1, "Site is required"),
-  locationId: z.string().optional(),
-  rackId: z.string().optional(),
-  rackFace: z.enum(["front", "rear"]).optional(),
-  position: z.coerce.number().optional(),
-  latitude: z.coerce.number().optional(),
-  longitude: z.coerce.number().optional(),
+  locationId: z.string().optional().nullable(),
+  rackId: z.string().optional().nullable(),
+  rackFace: z.enum(["front", "rear"]).optional().nullable(),
+  position: z.coerce.number().optional().nullable(),
+  latitude: z.coerce.number().optional().nullable(),
+  longitude: z.coerce.number().optional().nullable(),
   status: z.enum(["active", "offline", "provisioning", "staged", "decommissioning"]),
-  platformId: z.string().optional(),
-  configTemplate: z.string().optional(),
+  platformId: z.string().optional().nullable(),
+  configTemplate: z.string().optional().nullable(),
   ip: z.string().ip({ message: "Invalid IP address" }).optional().or(z.literal('')),
-  clusterId: z.string().optional(),
-  tenantGroupId: z.string().optional(),
-  tenantId: z.string().optional(),
-  virtualChassisId: z.string().optional(),
-  vcPosition: z.coerce.number().optional(),
-  vcPriority: z.coerce.number().optional(),
+  clusterId: z.string().optional().nullable(),
+  tenantGroupId: z.string().optional().nullable(),
+  tenantId: z.string().optional().nullable(),
+  virtualChassisId: z.string().optional().nullable(),
+  vcPosition: z.coerce.number().optional().nullable(),
+  vcPriority: z.coerce.number().optional().nullable(),
 })
 
 type DeviceFormValues = z.infer<typeof deviceSchema>
 
-export function DeviceClientPage({
-    initialDevices,
-    sites,
-    deviceTypes,
-    deviceRoles,
-    platforms,
-    locations,
-    racks,
-    clusters,
-    tenants,
-    tenantGroups,
-    virtualChassis
-}: DeviceClientPageProps) {
+export function DeviceClientPage() {
   const { toast } = useToast()
-  const [devices, setDevices] = useState(initialDevices)
+  const { 
+      isLoaded, 
+      activeBranch,
+      activeBranchData, 
+      createDevice, 
+      deleteDevice,
+  } = useBranching()
+  
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null)
-  const [pingingStatus, setPingingStatus] = useState<Record<string, boolean>>({});
+  const [pingingStatus, setPingingStatus] = useState<Record<string, boolean>>({})
 
   const form = useForm<DeviceFormValues>({
     resolver: zodResolver(deviceSchema),
@@ -161,36 +138,46 @@ export function DeviceClientPage({
     },
   })
 
+  // Data now comes from the branching context
+  const devices = activeBranchData?.devices ?? []
+  const sites = activeBranchData?.sites ?? []
+  const deviceTypes = activeBranchData?.deviceTypes ?? []
+  const deviceRoles = activeBranchData?.deviceRoles ?? []
+  const platforms = activeBranchData?.platforms ?? []
+  const locations = activeBranchData?.locations ?? []
+  const racks = activeBranchData?.racks ?? []
+  const clusters = activeBranchData?.clusters ?? []
+  const tenants = activeBranchData?.tenants ?? []
+  const tenantGroups = activeBranchData?.tenantGroups ?? []
+  const virtualChassis = activeBranchData?.virtualChassis ?? []
+
   const watchedSiteId = form.watch("siteId")
   const watchedLocationId = form.watch("locationId")
   const watchedTenantGroupId = form.watch("tenantGroupId")
 
-  const filteredLocations = locations.filter(l => l.siteId === watchedSiteId)
-  const filteredRacks = racks.filter(r => r.locationId === watchedLocationId)
-  const filteredTenants = tenants.filter(t => t.groupId === watchedTenantGroupId)
+  const filteredLocations = useMemo(() => locations.filter(l => l.siteId === watchedSiteId), [locations, watchedSiteId])
+  const filteredRacks = useMemo(() => racks.filter(r => r.locationId === watchedLocationId), [racks, watchedLocationId])
+  const filteredTenants = useMemo(() => tenants.filter(t => t.groupId === watchedTenantGroupId), [tenants, watchedTenantGroupId])
 
-
-  async function onSubmit(data: DeviceFormValues) {
-    const result = await createDevice(data);
-    if (result.success && result.newDevice) {
-        setDevices(prev => [...prev, result.newDevice as EnrichedDevice]);
-        toast({ title: "Success", description: "Device has been added." })
-        setIsAddDialogOpen(false)
-        form.reset()
-    } else {
-        toast({ title: "Error", description: result.message, variant: 'destructive' })
+  function onSubmit(data: DeviceFormValues) {
+    if (activeBranch === 'main') {
+        toast({ title: "Error", description: "Cannot add devices directly to the main branch. Please create a new branch first.", variant: 'destructive' })
+        return;
     }
+    createDevice(data)
+    toast({ title: "Success", description: `Device staged for addition in branch '${activeBranch}'.` })
+    setIsAddDialogOpen(false)
+    form.reset()
   }
 
   const handleDeleteConfirm = async () => {
     if (deviceToDelete) {
-      const result = await deleteDevice(deviceToDelete);
-      if (result.success) {
-          setDevices((prev) => prev.filter((d) => d.id !== deviceToDelete))
-          toast({ title: "Success", description: `Device has been deleted.` });
-      } else {
-          toast({ title: "Error", description: result.message, variant: 'destructive' });
-      }
+        if (activeBranch === 'main') {
+            toast({ title: "Error", description: "Cannot delete devices directly from the main branch. Please create a new branch first.", variant: 'destructive' })
+        } else {
+            deleteDevice(deviceToDelete)
+            toast({ title: "Success", description: `Device staged for deletion in branch '${activeBranch}'.` })
+        }
     }
     setIsDeleteDialogOpen(false)
     setDeviceToDelete(null)
@@ -202,6 +189,7 @@ export function DeviceClientPage({
   }
 
   const handlePingDevice = (deviceId: string) => {
+    // This is a UI simulation and does not persist
     const device = devices.find(d => d.id === deviceId)
     if (!device) return;
 
@@ -210,21 +198,11 @@ export function DeviceClientPage({
 
     setTimeout(() => {
         const isSuccess = Math.random() > 0.2; // 80% success rate
-        
-        setDevices(prevDevices => 
-            prevDevices.map(d => 
-                d.id === deviceId 
-                    ? { ...d, status: isSuccess ? 'active' : 'offline' } 
-                    : d
-            )
-        );
-
         toast({ 
             title: isSuccess ? `Ping to ${device.name} successful!` : `Ping to ${device.name} failed.`,
-            description: isSuccess ? 'Device is now marked as active.' : 'Device is now marked as offline.',
+            description: `Device status check complete.`,
             variant: isSuccess ? 'default' : 'destructive',
         });
-
         setPingingStatus(prev => ({ ...prev, [deviceId]: false }));
     }, 1500);
   };
@@ -244,6 +222,24 @@ export function DeviceClientPage({
       default:
         return <Badge variant="outline" className="capitalize">{status}</Badge>
     }
+  }
+
+  if (!isLoaded) {
+    return (
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-72" />
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+            </CardContent>
+        </Card>
+    )
   }
 
   return (
@@ -300,7 +296,7 @@ export function DeviceClientPage({
                   <DialogHeader>
                     <DialogTitle>Add New Device</DialogTitle>
                     <DialogDescription>
-                      Fill in the details below to add a new device to the inventory.
+                      Fill in the details below to add a new device to the inventory. Changes will be staged on the current branch: '{activeBranch}'.
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...form}>
@@ -767,7 +763,7 @@ export function DeviceClientPage({
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the device
-              "{deviceToDelete && devices.find(d => d.id === deviceToDelete)?.name}".
+              "{deviceToDelete && devices.find(d => d.id === deviceToDelete)?.name}" from the current branch.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
