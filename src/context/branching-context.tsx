@@ -36,8 +36,9 @@ const initialBranches: Branch[] = [
 
 // This is now just the starting point. The context will manage the history.
 const initialCommits: Commit[] = [
-  { id: 'c1', message: "Initial commit", branch: "system", author: "system", timestamp: "3 days ago", body: "System initialization." },
-].reverse()
+  { id: 'c2', message: "chore: Setup initial project structure", branch: 'main', author: 'system', timestamp: '2 days ago', body: 'Added basic pages and components.' },
+  { id: 'c1', message: "Initial commit", branch: "main", author: "system", timestamp: "3 days ago", body: "System initialization." },
+]
 
 const BranchingContext = createContext<BranchingContextType | undefined>(undefined);
 
