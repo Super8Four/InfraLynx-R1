@@ -1,4 +1,5 @@
 
+
 export type Region = {
   id: string
   name: string
@@ -114,7 +115,6 @@ export type VirtualChassis = {
   name: string
   domain: string
   masterId: string
-  memberIds: string[]
 }
 
 export type Device = {
@@ -125,8 +125,7 @@ export type Device = {
   deviceRoleId: string
   platformId?: string | null
   siteId: string
-  site?: string // Legacy, prefer siteId
-  ip?: string
+  ip?: string | null
   tags: string[]
   virtualChassisId?: string | null
   vcPosition?: number | null
@@ -155,7 +154,7 @@ export type RackType = {
   manufacturer: string
   model: string
   u_height: number
-  width: 'nineteen_in' | 'twenty_three_in' | '19in' | '23in'
+  width: '19in' | '23in'
 }
 
 export type Rack = {
@@ -167,7 +166,7 @@ export type Rack = {
   typeId?: string | null
   status: 'active' | 'planned' | 'decommissioned'
   u_height: number
-  width: 'nineteen_in' | 'twenty_three_in' | '19in' | '23in'
+  width: '19in' | '23in'
   tags: string[]
   facilityId?: string | null
   tenantId?: string | null
@@ -175,9 +174,9 @@ export type Rack = {
   deviceCount?: number;
   spaceUtilization?: number;
   startingUnit?: number;
-  serial?: string;
-  assetTag?: string;
-  tenantGroupId?: string;
+  serial?: string | null;
+  assetTag?: string | null;
+  tenantGroupId?: string | null;
 }
 
 export type RackReservation = {
@@ -192,9 +191,9 @@ export type IPAddress = {
   id: string
   address: string
   status: 'active' | 'reserved' | 'deprecated' | 'dhcp'
-  assignedObjectType?: 'device' | 'vm' | 'interface' | null
+  assignedObjectType?: 'Device' | 'VirtualMachine' | 'Interface' | null
   assignedObjectId?: string | null
-  dns_name?: string | null
+  dnsName?: string | null
   description?: string | null
   prefixId?: string
 }
@@ -405,7 +404,7 @@ export const initialDeviceTypes: DeviceType[] = [
 ];
 
 export const initialVirtualChassis: VirtualChassis[] = [
-    { id: 'vc-1', name: 'Core-Stack-01', domain: 'default', masterId: 'core-sw-01', memberIds: ['dev-1', 'dev-6'] }
+    { id: 'vc-1', name: 'Core-Stack-01', domain: 'default', masterId: 'dev-1' }
 ];
 
 export const initialDevices: Device[] = [
@@ -439,11 +438,11 @@ export const initialRackReservations: RackReservation[] = [
 ];
 
 const allIpAddresses: IPAddress[] = [
-    { id: 'ip-1', address: "10.1.1.1", status: 'active', assignedObjectType: "device", assignedObjectId: "dev-1", dns_name: "core-sw-01.example.com", description: "Gateway", prefixId: 'prefix-1' },
-    { id: 'ip-2', address: "10.1.1.10", status: 'active', assignedObjectType: "vm", assignedObjectId: "vm-1", dns_name: "web-server-01.example.com", description: "Primary Web Server", prefixId: 'prefix-1' },
-    { id: 'ip-3', address: "10.1.1.11", status: 'dhcp', assignedObjectType: "vm", assignedObjectId: "vm-2", prefixId: 'prefix-1' },
+    { id: 'ip-1', address: "10.1.1.1", status: 'active', assignedObjectType: "Device", assignedObjectId: "dev-1", dnsName: "core-sw-01.example.com", description: "Gateway", prefixId: 'prefix-1' },
+    { id: 'ip-2', address: "10.1.1.10", status: 'active', assignedObjectType: "VirtualMachine", assignedObjectId: "vm-1", dnsName: "web-server-01.example.com", description: "Primary Web Server", prefixId: 'prefix-1' },
+    { id: 'ip-3', address: "10.1.1.11", status: 'dhcp', assignedObjectType: "VirtualMachine", assignedObjectId: "vm-2", prefixId: 'prefix-1' },
     { id: 'ip-4', address: "10.1.1.254", status: 'reserved', description: "Broadcast", prefixId: 'prefix-1' },
-    { id: 'ip-5', address: "192.168.10.55", status: 'dhcp', assignedObjectType: "device", assignedObjectId: "dev-3", dns_name: "jdoe-laptop.corp.example.com", prefixId: 'prefix-2' },
+    { id: 'ip-5', address: "192.168.10.55", status: 'dhcp', assignedObjectType: "Device", assignedObjectId: "dev-3", dnsName: "jdoe-laptop.corp.example.com", prefixId: 'prefix-2' },
 ];
 
 export const initialPrefixes: Prefix[] = [
@@ -512,4 +511,3 @@ export const initialVirtualMachines: VirtualMachine[] = [
     { id: 'vm-2', name: 'db-prod-01', status: 'active', clusterId: 'cluster-1', role: 'Database Server', vcpus: 8, memory: 32, disk: 500, primaryIp: '10.1.1.12' },
     { id: 'vm-3', name: 'test-runner-ci', status: 'offline', clusterId: 'cluster-2', role: 'CI/CD Runner', vcpus: 2, memory: 4, disk: 50, primaryIp: '192.168.10.100' },
 ];
-
