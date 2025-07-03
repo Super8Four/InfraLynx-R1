@@ -1,6 +1,5 @@
 
-"use client"
-
+import prisma from "@/lib/prisma"
 import {
   Accordion,
   AccordionContent,
@@ -20,7 +19,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { PlusCircle, Edit, Server, Monitor, Globe } from "lucide-react"
-import { prefixes, type Prefix } from "@/lib/data"
 
 const getStatusBadge = (status: string) => {
     switch (status) {
@@ -35,7 +33,7 @@ const getStatusBadge = (status: string) => {
       default:
         return <Badge variant="outline" className="capitalize">{status}</Badge>
     }
-  }
+}
 
 const getAssignedObjectIcon = (type?: "device" | "vm" | "interface") => {
     switch (type) {
@@ -46,8 +44,20 @@ const getAssignedObjectIcon = (type?: "device" | "vm" | "interface") => {
     }
 }
 
+const calculateUsage = (prefix: string, ipCount: number) => {
+    const cidr = parseInt(prefix.split('/')[1], 10);
+    const totalIps = Math.pow(2, 32 - cidr);
+    if (totalIps === 0) return 0;
+    return (ipCount / totalIps) * 100;
+}
 
-export default function IpamPage() {
+export default async function IpamPage() {
+  const prefixes = await prisma.prefix.findMany({
+    include: {
+        ips: true
+    }
+  });
+
   return (
     <div className="space-y-6">
       <Card>
@@ -78,7 +88,7 @@ export default function IpamPage() {
                         </div>
                         <div className="col-span-12 lg:col-span-2 flex items-center gap-2">
                             {getStatusBadge(p.status)}
-                            <Progress value={p.usage} className="w-16 hidden lg:block" />
+                            <Progress value={calculateUsage(p.prefix, p.ips.length)} className="w-16 hidden lg:block" />
                         </div>
                     </div>
                 </AccordionTrigger>
@@ -101,11 +111,11 @@ export default function IpamPage() {
                                     <TableRow key={ip.address}>
                                         <TableCell className="font-mono">{ip.address}</TableCell>
                                         <TableCell>{getStatusBadge(ip.status)}</TableCell>
-                                        <TableCell className="font-mono text-xs">{ip.dns_name || '—'}</TableCell>
+                                        <TableCell className="font-mono text-xs">{ip.dnsName || '—'}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
-                                                {getAssignedObjectIcon(ip.assigned_object_type)}
-                                                <span>{ip.assigned_object_id || '—'}</span>
+                                                {getAssignedObjectIcon(ip.assignedObjectType as any || undefined)}
+                                                <span>{ip.assignedObjectId || '—'}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground">{ip.description || '—'}</TableCell>

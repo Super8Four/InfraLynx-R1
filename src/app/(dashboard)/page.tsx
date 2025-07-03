@@ -17,11 +17,6 @@ import {
   Tooltip,
   Cell,
 } from "recharts"
-import {
-  initialDevices,
-  prefixes,
-  recentActivity,
-} from "@/lib/data"
 import { useBranching } from "@/context/branching-context"
 import BranchGraph from "@/components/branch-graph"
 
@@ -54,36 +49,49 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-// --- Data Calculations ---
+// This is mock data, in a real app this would be fetched from a DB
+// and likely would be more complex to represent activity.
+const recentActivity = [
+    {
+      id: 1,
+      user: "admin",
+      action: "add_device",
+      target: "edge-router-01",
+      status: "Success",
+      time: "2 hours ago",
+    },
+    {
+      id: 2,
+      user: "jdoe",
+      action: "patch_cable",
+      target: "core-sw-01:ge-0/0/1",
+      status: "Success",
+      time: "5 hours ago",
+    },
+    {
+      id: 3,
+      user: "automation",
+      action: "update_ip",
+      target: "10.1.1.15",
+      status: "Success",
+      time: "1 day ago",
+    },
+    {
+      id: 4,
+      user: "admin",
+      action: "add_vlan",
+      target: "VLAN 100",
+      status: "Failed",
+      time: "2 days ago",
+    },
+];
 
-// Stats
-const totalDevices = initialDevices.length
-const onlineDevices = initialDevices.filter(d => d.status === "active").length
-const onlineDevicePercentage = totalDevices > 0 ? (onlineDevices / totalDevices) * 100 : 0
-
-const totalPrefixes = prefixes.length
-const activePrefixes = prefixes.filter(p => p.status === 'active').length
-
-const totalIPs = prefixes.reduce((acc, p) => {
-    const cidr = parseInt(p.prefix.split('/')[1], 10);
-    return acc + Math.pow(2, 32 - cidr);
-}, 0);
-const assignedIPs = prefixes.reduce((acc, p) => acc + p.ips.length, 0);
-
-
-// IP Usage Pie Chart
-const ipStatusCounts = prefixes
-  .flatMap(p => p.ips)
-  .reduce((acc, ip) => {
-    acc[ip.status] = (acc[ip.status] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
-
-const ipUsageData = Object.entries(ipStatusCounts).map(([name, value]) => ({
-  name: name.charAt(0).toUpperCase() + name.slice(1),
-  value,
-  fill: `var(--color-${name})`,
-}))
+// IP Usage Pie Chart data would be calculated from DB query
+const ipUsageData = [
+    { name: 'Active', value: 4, fill: 'var(--color-active)' },
+    { name: 'DHCP', value: 2, fill: 'var(--color-dhcp)' },
+    { name: 'Reserved', value: 1, fill: 'var(--color-reserved)' },
+];
 
 const ipUsageConfig = {
   active: { label: "Active", color: "hsl(var(--chart-1))" },
@@ -98,32 +106,33 @@ export default function DashboardPage() {
   const activeBranches = branches.filter(b => !b.merged && b.name !== 'main')
   const recentCommits = commits.slice(0, 15)
 
+  // In a real app, these stats would come from props passed by a server component
   const STATS = [
     {
       title: "Total Devices",
-      value: totalDevices.toLocaleString(),
-      change: `${onlineDevices} Active`,
+      value: "6", // Example value
+      change: `5 Active`,
       icon: Server,
       href: "/devices"
     },
     {
         title: "Device Health",
-        value: `${onlineDevicePercentage.toFixed(1)}%`,
+        value: `83.3%`, // Example value
         change: "Active",
         icon: CheckCircle,
         href: "/devices"
     },
     {
       title: "IPs Assigned",
-      value: assignedIPs.toLocaleString(),
-      change: `of ${totalIPs.toLocaleString()}`,
+      value: "5", // Example value
+      change: `of 512 total`,
       icon: Network,
       href: "/ipam"
     },
     {
       title: "Active Prefixes",
-      value: activePrefixes.toLocaleString(),
-      change: `of ${totalPrefixes} total`,
+      value: "2", // Example value
+      change: `of 3 total`,
       icon: Cable,
       href: "/ipam"
     },
