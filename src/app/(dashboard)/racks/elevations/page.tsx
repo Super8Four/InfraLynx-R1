@@ -2,9 +2,17 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 import Rack from "@/components/rack"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { 
     initialRacks, 
     initialDevices, 
@@ -14,7 +22,7 @@ import {
 } from "@/lib/data"
 import type { DeviceInRack, ProcessedRack } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
-
+import { ChevronDown } from "lucide-react"
 
 export default function RacksPage() {
     const { toast } = useToast()
@@ -53,6 +61,23 @@ export default function RacksPage() {
         const siteIdsWithRacks = new Set(racks.map(r => r.siteId));
         return initialSites.filter(site => siteIdsWithRacks.has(site.id));
     }, [racks]);
+    
+    const [selectedSiteId, setSelectedSiteId] = useState<string>('all');
+
+    const filteredRacks = useMemo(() => {
+        if (selectedSiteId === 'all') {
+            return racks;
+        }
+        return racks.filter(r => r.siteId === selectedSiteId);
+    }, [racks, selectedSiteId]);
+
+    const selectedSiteName = useMemo(() => {
+        if (selectedSiteId === 'all') {
+            return 'All Locations';
+        }
+        return sites.find(s => s.id === selectedSiteId)?.name || 'All Locations';
+    }, [selectedSiteId, sites]);
+
 
     const handleDragStart = useCallback((event: React.DragEvent<HTMLDivElement>, device: DeviceInRack) => {
         event.dataTransfer.setData("application/json", JSON.stringify(device));
@@ -142,36 +167,45 @@ export default function RacksPage() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-            <CardTitle>Rack Elevations</CardTitle>
-            <CardDescription>Visualize and manage device placement in data center racks.</CardDescription>
-        </CardHeader>
-      </Card>
-      <Tabs defaultValue="all" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:w-auto">
-          <TabsTrigger value="all">All Locations</TabsTrigger>
-          {sites.map(site => (
-              <TabsTrigger key={site.id} value={site.id}>{site.name}</TabsTrigger>
-          ))}
-        </TabsList>
-        
-        <TabsContent value="all" className="mt-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {racks.map(rack => <Rack key={rack.id} rack={rack} onDragStart={handleDragStart} onDragOver={handleDragOver} onDrop={handleDrop} />)}
-          </div>
-        </TabsContent>
-
-        {sites.map(site => (
-            <TabsContent key={site.id} value={site.id} className="mt-6">
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {racks.filter(r => r.siteId === site.id).map(rack => (
-                        <Rack key={rack.id} rack={rack} onDragStart={handleDragStart} onDragOver={handleDragOver} onDrop={handleDrop} />
-                    ))}
+        <Card>
+            <CardHeader className="flex flex-row items-start justify-between">
+                <div>
+                    <CardTitle>Rack Elevations</CardTitle>
+                    <CardDescription>Visualize and manage device placement in data center racks.</CardDescription>
                 </div>
-            </TabsContent>
-        ))}
-      </Tabs>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="ml-auto">
+                            <span>{selectedSiteName}</span>
+                            <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Filter by Site</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => setSelectedSiteId('all')}>All Locations</DropdownMenuItem>
+                        {sites.map(site => (
+                            <DropdownMenuItem key={site.id} onSelect={() => setSelectedSiteId(site.id)}>
+                                {site.name}
+                            </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </CardHeader>
+            <CardContent>
+                 {filteredRacks.length > 0 ? (
+                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        {filteredRacks.map(rack => (
+                            <Rack key={rack.id} rack={rack} onDragStart={handleDragStart} onDragOver={handleDragOver} onDrop={handleDrop} />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center h-64 rounded-md border border-dashed text-muted-foreground">
+                        No racks found for this location.
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     </div>
   )
 }
