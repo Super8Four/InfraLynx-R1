@@ -145,7 +145,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {STATS.map((stat) => (
           <Link href={stat.href} key={stat.title}>
             <Card className="hover:bg-muted/50 transition-colors">

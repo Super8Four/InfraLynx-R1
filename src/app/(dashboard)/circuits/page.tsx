@@ -235,11 +235,11 @@ export default function CircuitsPage() {
               <TableRow>
                 <TableHead>CID</TableHead>
                 <TableHead>Provider</TableHead>
-                <TableHead>Type</TableHead>
+                <TableHead className="hidden md:table-cell">Type</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Termination A</TableHead>
-                <TableHead>Termination Z</TableHead>
-                <TableHead>Commit Rate</TableHead>
+                <TableHead className="hidden sm:table-cell">Termination A</TableHead>
+                <TableHead className="hidden lg:table-cell">Termination Z</TableHead>
+                <TableHead className="hidden sm:table-cell">Commit Rate</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
@@ -248,11 +248,11 @@ export default function CircuitsPage() {
                 <TableRow key={circuit.id}>
                   <TableCell className="font-medium">{circuit.cid}</TableCell>
                   <TableCell>{getProviderName(circuit.providerId)}</TableCell>
-                  <TableCell>{getTypeName(circuit.typeId)}</TableCell>
+                  <TableCell className="hidden md:table-cell">{getTypeName(circuit.typeId)}</TableCell>
                   <TableCell>{getStatusBadge(circuit.status)}</TableCell>
-                  <TableCell>{getSiteName(circuit.termA_siteId)}</TableCell>
-                  <TableCell>{getSiteName(circuit.termZ_siteId)}</TableCell>
-                  <TableCell>{circuit.commitRate} Mbps</TableCell>
+                  <TableCell className="hidden sm:table-cell">{getSiteName(circuit.termA_siteId)}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{getSiteName(circuit.termZ_siteId)}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{circuit.commitRate} Mbps</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

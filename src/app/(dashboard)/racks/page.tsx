@@ -420,15 +420,15 @@ export default function RacksPage() {
                   <Checkbox />
                 </TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Site</TableHead>
-                <TableHead>Location</TableHead>
+                <TableHead className="hidden sm:table-cell">Site</TableHead>
+                <TableHead className="hidden lg:table-cell">Location</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Facility ID</TableHead>
-                <TableHead>Tenant</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Height</TableHead>
-                <TableHead>Devices</TableHead>
+                <TableHead className="hidden lg:table-cell">Facility ID</TableHead>
+                <TableHead className="hidden lg:table-cell">Tenant</TableHead>
+                <TableHead className="hidden md:table-cell">Role</TableHead>
+                <TableHead className="hidden lg:table-cell">Type</TableHead>
+                <TableHead className="hidden md:table-cell">Height</TableHead>
+                <TableHead className="hidden md:table-cell">Devices</TableHead>
                 <TableHead>Space</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
@@ -440,17 +440,17 @@ export default function RacksPage() {
                         <Checkbox />
                     </TableCell>
                     <TableCell className="font-medium">{rack.name}</TableCell>
-                    <TableCell>{getSiteName(rack.siteId)}</TableCell>
-                    <TableCell>{getLocationName(rack.locationId)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{getSiteName(rack.siteId)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{getLocationName(rack.locationId)}</TableCell>
                     <TableCell>{getStatusBadge(rack.status)}</TableCell>
-                    <TableCell>{rack.facilityId || '—'}</TableCell>
-                    <TableCell>{getTenantName(rack.tenantId)}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden lg:table-cell">{rack.facilityId || '—'}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{getTenantName(rack.tenantId)}</TableCell>
+                    <TableCell className="hidden md:table-cell">
                         {rack.roleId ? <Badge variant="secondary">{getRoleName(rack.roleId)}</Badge> : '—'}
                     </TableCell>
-                    <TableCell>{getTypeName(rack.typeId)}</TableCell>
-                    <TableCell>{rack.u_height}U</TableCell>
-                    <TableCell>{rack.deviceCount}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{getTypeName(rack.typeId)}</TableCell>
+                    <TableCell className="hidden md:table-cell">{rack.u_height}U</TableCell>
+                    <TableCell className="hidden md:table-cell">{rack.deviceCount}</TableCell>
                     <TableCell>
                         <div className="flex items-center gap-2">
                             <Progress value={rack.spaceUtilization} indicatorClassName={getSpaceUtilizationColor(rack.spaceUtilization)} className="h-2 w-20" />
