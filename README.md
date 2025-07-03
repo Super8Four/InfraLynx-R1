@@ -10,19 +10,32 @@ InfraLynx is a NextJS project designed to provide a comprehensive UI for managin
 - Power: Monitor and manage power distribution.
 - Racks: Visualize and manage rack space.
 - Organization: Manage sites, regions, tenants, and contacts.
+- Virtualization: Manage virtual machines and clusters.
+- Wireless: Manage wireless infrastructure.
 - And more!
 
 ## Getting Started
 
-To get a local copy up and running, follow these steps.
+To get a local copy up and running, you have two primary options: using Docker/Docker Compose or performing a standard installation directly on your system.
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
-- npm or yarn
-- Docker (for running dependencies like databases)
+Before you begin, ensure you have the following installed:
+
+*   **Node.js:** Version 18 or higher is recommended. You can download it from [nodejs.org](https://nodejs.org/).
+*   **npm or yarn:** These package managers are installed with Node.js.
+*   **Docker and Docker Compose:** Required for the Docker-based installation. Download Docker Desktop from [docker.com](https://www.docker.com/products/docker-desktop/).
+*   **Git:** For cloning the repository.
 
 ### Installation
+
+#### Option 1: Using Docker Compose (Recommended)
+
+This method uses Docker Compose to set up and run the application and its dependencies. It is the easiest way to get started as it handles setting up the database and other dependencies.
+
+1.  Clone the repository:
+
+
 
 1. Clone the repository:
 
