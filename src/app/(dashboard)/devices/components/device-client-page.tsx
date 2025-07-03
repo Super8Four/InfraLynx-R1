@@ -110,7 +110,7 @@ const deviceSchema = z.object({
   description: z.string().optional(),
   tags: z.string().optional(),
   deviceTypeId: z.string().min(1, "Device Type is required"),
-  airflow: z.enum(["front-to-rear", "rear-to-front", "side-to-rear", "passive"]).optional(),
+  airflow: z.enum(["front_to_rear", "rear_to_front", "side_to_rear", "passive"]).optional(),
   serial: z.string().optional(),
   assetTag: z.string().optional(),
   siteId: z.string().min(1, "Site is required"),
@@ -378,9 +378,9 @@ export function DeviceClientPage({
                                         </SelectTrigger>
                                       </FormControl>
                                       <SelectContent>
-                                        <SelectItem value="front-to-rear">Front-to-rear</SelectItem>
-                                        <SelectItem value="rear-to-front">Rear-to-front</SelectItem>
-                                        <SelectItem value="side-to-rear">Side-to-rear</SelectItem>
+                                        <SelectItem value="front_to_rear">Front-to-rear</SelectItem>
+                                        <SelectItem value="rear_to_front">Rear-to-front</SelectItem>
+                                        <SelectItem value="side_to_rear">Side-to-rear</SelectItem>
                                         <SelectItem value="passive">Passive</SelectItem>
                                       </SelectContent>
                                     </Select>

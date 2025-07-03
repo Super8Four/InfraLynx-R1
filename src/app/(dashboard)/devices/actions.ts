@@ -11,7 +11,7 @@ const deviceSchema = z.object({
   description: z.string().optional(),
   tags: z.string().optional(),
   deviceTypeId: z.string().min(1, "Device Type is required"),
-  airflow: z.enum(["front-to-rear", "rear-to-front", "side-to-rear", "passive"]).optional(),
+  airflow: z.enum(["front_to_rear", "rear_to_front", "side_to_rear", "passive"]).optional(),
   serial: z.string().optional(),
   assetTag: z.string().optional(),
   siteId: z.string().min(1, "Site is required"),

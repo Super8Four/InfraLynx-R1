@@ -61,6 +61,9 @@ import { createContactAssignment, deleteContactAssignment } from "../actions"
 type EnrichedContactAssignment = ContactAssignment & {
   contact: Contact;
   role: ContactRole;
+  region: Region | null;
+  site: Site | null;
+  location: Location | null;
 }
 
 interface ContactAssignmentsPageProps {
@@ -138,13 +141,13 @@ export function ContactAssignmentsClientPage({
     let name = assignment.objectId;
     switch (assignment.objectType) {
       case 'Region': 
-        name = regions.find(r => r.id === assignment.objectId)?.name || name;
+        name = assignment.region?.name || name;
         break;
       case 'Site':
-        name = sites.find(s => s.id === assignment.objectId)?.name || name;
+        name = assignment.site?.name || name;
         break;
       case 'Location': 
-        name = locations.find(l => l.id === assignment.objectId)?.name || name;
+        name = assignment.location?.name || name;
         break;
       default: break;
     }
@@ -258,7 +261,7 @@ export function ContactAssignmentsClientPage({
                 <TableRow key={assignment.id}>
                   <TableCell>
                     <div className="font-medium">{getObjectName(assignment)}</div>
-                    <div className="text-sm text-muted-foreground capitalize">{assignment.objectType}</div>
+                    <div className="text-sm text-muted-foreground capitalize">{assignment.objectType.toLowerCase()}</div>
                   </TableCell>
                   <TableCell>{assignment.role.name}</TableCell>
                   <TableCell>{assignment.contact.name}</TableCell>
