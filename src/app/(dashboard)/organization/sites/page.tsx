@@ -2,6 +2,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -286,7 +287,11 @@ export default function SitesPage() {
             <TableBody>
               {sites.map((site) => (
                 <TableRow key={site.id}>
-                  <TableCell className="font-medium">{site.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link href={`/organization/sites/${site.id}`} className="hover:underline">
+                        {site.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>{getStatusBadge(site.status)}</TableCell>
                   <TableCell>{getRegionName(site.regionId)}</TableCell>
                   <TableCell>{site.facility ?? 'N/A'}</TableCell>
@@ -307,7 +312,9 @@ export default function SitesPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                           <Link href={`/organization/sites/${site.id}`}>View Details</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
@@ -327,5 +334,3 @@ export default function SitesPage() {
     </div>
   )
 }
-
-    
