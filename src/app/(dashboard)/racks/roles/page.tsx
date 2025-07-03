@@ -55,7 +55,6 @@ import { initialRackRoles, type RackRole } from "@/lib/data"
 
 const roleSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens."),
   description: z.string().optional(),
 })
 
@@ -68,7 +67,7 @@ export default function RackRolesPage() {
 
   const form = useForm<RoleFormValues>({
     resolver: zodResolver(roleSchema),
-    defaultValues: { name: "", slug: "", description: "" },
+    defaultValues: { name: "", description: "" },
   })
   
   function onSubmit(data: RoleFormValues) {
@@ -125,19 +124,6 @@ export default function RackRolesPage() {
                     />
                     <FormField
                       control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Slug</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., core-network" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem>
@@ -164,7 +150,6 @@ export default function RackRolesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Slug</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
@@ -173,7 +158,6 @@ export default function RackRolesPage() {
               {roles.map((role) => (
                 <TableRow key={role.id}>
                   <TableCell className="font-medium">{role.name}</TableCell>
-                  <TableCell className="font-mono text-sm">{role.slug}</TableCell>
                   <TableCell>{role.description}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

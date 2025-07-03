@@ -55,7 +55,6 @@ import { initialTenantGroups, type TenantGroup } from "@/lib/data"
 
 const groupSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens."),
   description: z.string().optional(),
 })
 
@@ -68,14 +67,13 @@ export default function TenantGroupsPage() {
 
   const form = useForm<GroupFormValues>({
     resolver: zodResolver(groupSchema),
-    defaultValues: { name: "", slug: "", description: "" },
+    defaultValues: { name: "", description: "" },
   })
 
   function onSubmit(data: GroupFormValues) {
     const newGroup: TenantGroup = {
       id: `group-${Date.now()}`,
       name: data.name,
-      slug: data.slug,
       description: data.description || "",
     }
     setGroups((prev) => [...prev, newGroup])
@@ -126,19 +124,6 @@ export default function TenantGroupsPage() {
                     />
                     <FormField
                       control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Slug</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., corporate" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem>
@@ -165,7 +150,6 @@ export default function TenantGroupsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Slug</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
@@ -174,7 +158,6 @@ export default function TenantGroupsPage() {
               {groups.map((group) => (
                 <TableRow key={group.id}>
                   <TableCell className="font-medium">{group.name}</TableCell>
-                  <TableCell className="font-mono">{group.slug}</TableCell>
                   <TableCell>{group.description}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

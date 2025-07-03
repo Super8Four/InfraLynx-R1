@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -54,7 +55,6 @@ import { initialTags, type Tag } from "@/lib/data"
 
 const tagSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens."),
   description: z.string().optional(),
 })
 
@@ -67,7 +67,7 @@ export default function TagsPage() {
 
   const form = useForm<TagFormValues>({
     resolver: zodResolver(tagSchema),
-    defaultValues: { name: "", slug: "", description: "" },
+    defaultValues: { name: "", description: "" },
   })
   
   function onSubmit(data: TagFormValues) {
@@ -124,19 +124,6 @@ export default function TagsPage() {
                     />
                     <FormField
                       control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Slug</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., critical" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem>
@@ -163,7 +150,6 @@ export default function TagsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Slug</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
               </TableRow>
@@ -172,7 +158,6 @@ export default function TagsPage() {
               {tags.map((tag) => (
                 <TableRow key={tag.id}>
                   <TableCell className="font-medium">{tag.name}</TableCell>
-                  <TableCell className="font-mono text-sm">{tag.slug}</TableCell>
                   <TableCell>{tag.description}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

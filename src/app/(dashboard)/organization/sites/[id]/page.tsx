@@ -94,7 +94,6 @@ export default function SiteDetailPage({ params }: { params: { id: string } }) {
                     <InfoField label="Facility" value={site.facility} icon={Building} />
                     <InfoField label="ASNs" value={site.asns} icon={Rss} />
                     <InfoField label="Time Zone" value={site.timeZone} icon={Clock} />
-                    <InfoField label="Slug" value={<span className="font-mono text-xs">{site.slug}</span>} icon={Hash} />
                 </div>
                 <Separator className="my-6" />
                 <InfoField label="Tags" value={
@@ -179,4 +178,3 @@ export default function SiteDetailPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
-

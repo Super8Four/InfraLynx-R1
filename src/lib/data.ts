@@ -22,19 +22,17 @@ export const initialRegions: Region[] = [
 export type SiteGroup = {
     id: string;
     name: string;
-    slug: string;
     description: string;
 }
 export const initialSiteGroups: SiteGroup[] = [
-    { id: 'dc', name: 'Data Centers', slug: 'data-centers', description: 'Primary data center facilities' },
-    { id: 'office', name: 'Branch Offices', slug: 'branch-offices', description: 'Remote office locations' },
+    { id: 'dc', name: 'Data Centers', description: 'Primary data center facilities' },
+    { id: 'office', name: 'Branch Offices', description: 'Remote office locations' },
 ];
 
 // Sites
 export type Site = {
     id: string;
     name: string;
-    slug: string;
     status: 'active' | 'offline' | 'planned' | 'decommissioning';
     regionId?: string;
     groupId?: string;
@@ -53,8 +51,8 @@ export type Site = {
     imageUrl?: string;
 }
 export const initialSites: Site[] = [
-    { id: 'florim-tn', name: 'Florim TN Data Center', slug: 'florim-tn-dc', regionId: 'us-east', status: 'active', groupId: 'dc', tags: ['primary'], latitude: 36.5297, longitude: -87.3595, tenantId: 'tenant-a', physicalAddress: '123 Main St, Clarksville, TN', imageUrl: 'https://placehold.co/600x400.png', facility: 'CL-01', asns: '65000', timeZone: 'America/Chicago', description: 'Primary data center facility for North American operations.', comments: 'All shipments must be scheduled 24 hours in advance with DC operations.' },
-    { id: 'dub-office', name: 'Dublin Office', slug: 'dub-office', regionId: 'eu', status: 'planned', groupId: 'office', tags: [], latitude: 53.3498, longitude: -6.2603, tenantId: 'tenant-b', physicalAddress: '456 O\'Connell Street, Dublin, Ireland', imageUrl: 'https://placehold.co/600x400.png', facility: 'DUB-01', timeZone: 'Europe/Dublin', description: 'Main European branch office and development hub.' },
+    { id: 'florim-tn', name: 'Florim TN Data Center', regionId: 'us-east', status: 'active', groupId: 'dc', tags: ['primary'], latitude: 36.5297, longitude: -87.3595, tenantId: 'tenant-a', physicalAddress: '123 Main St, Clarksville, TN', imageUrl: 'https://placehold.co/600x400.png', facility: 'CL-01', asns: '65000', timeZone: 'America/Chicago', description: 'Primary data center facility for North American operations.', comments: 'All shipments must be scheduled 24 hours in advance with DC operations.' },
+    { id: 'dub-office', name: 'Dublin Office', regionId: 'eu', status: 'planned', groupId: 'office', tags: [], latitude: 53.3498, longitude: -6.2603, tenantId: 'tenant-b', physicalAddress: '456 O\'Connell Street, Dublin, Ireland', imageUrl: 'https://placehold.co/600x400.png', facility: 'DUB-01', timeZone: 'Europe/Dublin', description: 'Main European branch office and development hub.' },
 ];
 
 export const timezones = [
@@ -83,25 +81,23 @@ export const initialLocations: Location[] = [
 export type TenantGroup = {
     id: string;
     name: string;
-    slug: string;
     description: string;
 }
 export const initialTenantGroups: TenantGroup[] = [
-    { id: 'tg-1', name: 'Corporate', slug: 'corporate', description: 'Corporate Tenants' },
-    { id: 'tg-2', name: 'External Customers', slug: 'external-customers', description: 'External Customer Tenants' },
+    { id: 'tg-1', name: 'Corporate', description: 'Corporate Tenants' },
+    { id: 'tg-2', name: 'External Customers', description: 'External Customer Tenants' },
 ];
 
 // Tenants
 export type Tenant = {
     id: string;
     name: string;
-    slug: string;
     description: string;
     groupId?: string;
 }
 export const initialTenants: Tenant[] = [
-    { id: 'tenant-a', name: 'Internal Services', slug: 'internal-services', groupId: 'tg-1', description: 'Company-internal applications and infrastructure' },
-    { id: 'tenant-b', name: 'Customer Hosting', slug: 'customer-hosting', groupId: 'tg-2', description: 'Shared hosting platform for external customers' },
+    { id: 'tenant-a', name: 'Internal Services', groupId: 'tg-1', description: 'Company-internal applications and infrastructure' },
+    { id: 'tenant-b', name: 'Customer Hosting', groupId: 'tg-2', description: 'Shared hosting platform for external customers' },
 ];
 
 // Contact Groups
@@ -160,14 +156,13 @@ export const initialContactAssignments: ContactAssignment[] = [
 export type Tag = {
     id: string;
     name: string;
-    slug: string;
     description: string;
 }
 export const initialTags: Tag[] = [
-    { id: 'tag-1', name: 'Critical', slug: 'critical', description: 'Critical infrastructure devices' },
-    { id: 'tag-2', name: 'Core', slug: 'core', description: 'Core network infrastructure' },
-    { id: 'tag-3', name: 'Users', slug: 'users', description: 'User-facing networks or devices' },
-    { id: 'tag-4', name: 'Security', slug: 'security', description: 'Security appliances and configurations' },
+    { id: 'tag-1', name: 'Critical', description: 'Critical infrastructure devices' },
+    { id: 'tag-2', name: 'Core', description: 'Core network infrastructure' },
+    { id: 'tag-3', name: 'Users', description: 'User-facing networks or devices' },
+    { id: 'tag-4', name: 'Security', description: 'Security appliances and configurations' },
 ];
 
 // --- DEVICES ---
@@ -239,13 +234,12 @@ export const initialDevices: Device[] = [
 export type RackRole = {
     id: string;
     name: string;
-    slug: string;
     description: string;
 };
 export const initialRackRoles: RackRole[] = [
-    { id: 'role-1', name: 'Core Network', slug: 'core-network', description: 'For core switches and routers' },
-    { id: 'role-2', name: 'Compute', slug: 'compute', description: 'For servers and virtualization hosts' },
-    { id: 'role-3', name: 'Storage', slug: 'storage', description: 'For SAN/NAS equipment' },
+    { id: 'role-1', name: 'Core Network', description: 'For core switches and routers' },
+    { id: 'role-2', name: 'Compute', description: 'For servers and virtualization hosts' },
+    { id: 'role-3', name: 'Storage', description: 'For SAN/NAS equipment' },
 ];
 
 export type RackTypeInfo = {

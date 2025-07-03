@@ -114,7 +114,6 @@ export default function SitesPage() {
   function onSubmit(data: SiteFormValues) {
     const newSite: Site = {
       id: `site-${Date.now()}`,
-      slug: data.name.toLowerCase().replace(/\s+/g, '-'),
       ...data,
       tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
     }

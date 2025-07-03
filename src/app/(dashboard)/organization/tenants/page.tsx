@@ -56,7 +56,6 @@ import { initialTenants, initialTenantGroups, type Tenant, type TenantGroup } fr
 
 const tenantSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens."),
   description: z.string().optional(),
   groupId: z.string().optional(),
 })
@@ -71,7 +70,7 @@ export default function TenantsPage() {
 
   const form = useForm<TenantFormValues>({
     resolver: zodResolver(tenantSchema),
-    defaultValues: { name: "", slug: "", description: "" },
+    defaultValues: { name: "", description: "" },
   })
   
   function onSubmit(data: TenantFormValues) {
@@ -128,19 +127,6 @@ export default function TenantsPage() {
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="slug"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Slug</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., internal-services" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                      <FormField
                       control={form.control}
                       name="groupId"
@@ -183,7 +169,6 @@ export default function TenantsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Slug</TableHead>
                 <TableHead>Group</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead><span className="sr-only">Actions</span></TableHead>
@@ -193,7 +178,6 @@ export default function TenantsPage() {
               {tenants.map((tenant) => (
                 <TableRow key={tenant.id}>
                   <TableCell className="font-medium">{tenant.name}</TableCell>
-                  <TableCell className="font-mono text-sm">{tenant.slug}</TableCell>
                   <TableCell>{getGroupName(tenant.groupId)}</TableCell>
                   <TableCell>{tenant.description}</TableCell>
                   <TableCell className="text-right">
