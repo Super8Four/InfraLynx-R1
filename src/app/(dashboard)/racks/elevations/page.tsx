@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
@@ -19,16 +18,44 @@ import {
     initialSites, 
     initialDeviceTypes, 
     initialDeviceRoles, 
+    type Rack as RackType,
+    type Device as DeviceType,
 } from "@/lib/data"
 import type { DeviceInRack, ProcessedRack } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, PlusCircle } from "lucide-react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const addDeviceSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  deviceTypeId: z.string().min(1, "Device Type is required"),
+  deviceRoleId: z.string().min(1, "Device Role is required"),
+});
+
+type AddDeviceFormValues = z.infer<typeof addDeviceSchema>;
 
 export default function RacksPage() {
     const { toast } = useToast()
-    const [racks, setRacks] = useState<ProcessedRack[]>(() => {
-        const deviceMap = new Map<string, typeof initialDevices>();
-        initialDevices.forEach(device => {
+    const [allRacks, setAllRacks] = useState<RackType[]>(initialRacks)
+    const [allDevices, setAllDevices] = useState<DeviceType[]>(initialDevices)
+    
+    const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false)
+    const [newDeviceLocation, setNewDeviceLocation] = useState<{ rackId: string, unit: number } | null>(null)
+
+    const form = useForm<AddDeviceFormValues>({
+        resolver: zodResolver(addDeviceSchema),
+        defaultValues: {},
+    });
+
+    const processedRacks = useMemo((): ProcessedRack[] => {
+        const deviceMap = new Map<string, DeviceType[]>();
+        allDevices.forEach(device => {
             if (device.rackId) {
                 if (!deviceMap.has(device.rackId)) {
                     deviceMap.set(device.rackId, []);
@@ -37,7 +64,7 @@ export default function RacksPage() {
             }
         });
 
-        return initialRacks.map(rack => {
+        return allRacks.map(rack => {
             const devicesData = deviceMap.get(rack.id) || [];
             const devicesInRack: DeviceInRack[] = devicesData.map(device => {
                 const deviceType = initialDeviceTypes.find(dt => dt.id === device.deviceTypeId);
@@ -55,21 +82,21 @@ export default function RacksPage() {
 
             return { ...rack, devices: devicesInRack };
         });
-    });
+    }, [allRacks, allDevices]);
 
     const sites = useMemo(() => {
-        const siteIdsWithRacks = new Set(racks.map(r => r.siteId));
+        const siteIdsWithRacks = new Set(allRacks.map(r => r.siteId));
         return initialSites.filter(site => siteIdsWithRacks.has(site.id));
-    }, [racks]);
+    }, [allRacks]);
     
     const [selectedSiteId, setSelectedSiteId] = useState<string>('all');
 
     const filteredRacks = useMemo(() => {
         if (selectedSiteId === 'all') {
-            return racks;
+            return processedRacks;
         }
-        return racks.filter(r => r.siteId === selectedSiteId);
-    }, [racks, selectedSiteId]);
+        return processedRacks.filter(r => r.siteId === selectedSiteId);
+    }, [processedRacks, selectedSiteId]);
 
     const selectedSiteName = useMemo(() => {
         if (selectedSiteId === 'all') {
@@ -96,74 +123,93 @@ export default function RacksPage() {
         
         const deviceToMove: DeviceInRack = JSON.parse(deviceToMoveJSON);
         
-        // Prevent dropping on itself if not changing position
-        if(deviceToMove.rackId === targetRackId && deviceToMove.u === targetUnit) return;
+        if (deviceToMove.rackId === targetRackId && deviceToMove.u === targetUnit) return;
 
-        setRacks(currentRacks => {
-            const targetRack = currentRacks.find(r => r.id === targetRackId);
-            if (!targetRack) return currentRacks;
+        const targetRack = processedRacks.find(r => r.id === targetRackId);
+        if (!targetRack) return;
 
-            // Check for conflicts in the target rack before making any changes
-            const newDeviceUnits = Array.from({ length: deviceToMove.height }, (_, i) => targetUnit - i);
-            
-            // Check if device goes out of bounds
-            if (newDeviceUnits.some(u => u < 1 || u > targetRack.u_height)) {
-                toast({
-                    title: "Move Failed",
-                    description: `Cannot place device outside of rack bounds (U1-${targetRack.u_height}).`,
-                    variant: "destructive",
-                });
-                return currentRacks;
-            }
+        const newDeviceUnits = Array.from({ length: deviceToMove.height }, (_, i) => targetUnit - i);
+        
+        if (newDeviceUnits.some(u => u < 1 || u > targetRack.u_height)) {
+            toast({ title: "Move Failed", description: `Cannot place device outside of rack bounds (U1-${targetRack.u_height}).`, variant: "destructive" });
+            return;
+        }
 
-            const otherDevicesInTargetRack = targetRack.devices.filter(d => d.id !== deviceToMove.id);
-
-            const isOverlap = otherDevicesInTargetRack.some(existingDevice => {
-                const existingDeviceUnits = Array.from({ length: existingDevice.height }, (_, i) => existingDevice.u - i);
-                return newDeviceUnits.some(unit => existingDeviceUnits.includes(unit));
-            });
-
-            if (isOverlap) {
-                 toast({
-                    title: "Move Failed",
-                    description: "Target location is occupied by another device.",
-                    variant: "destructive",
-                });
-                return currentRacks;
-            }
-
-            // If no conflicts, proceed with the state update
-            const nextRacks = currentRacks.map(rack => {
-                // Remove from source rack
-                if (rack.id === deviceToMove.rackId) {
-                    return {
-                        ...rack,
-                        devices: rack.devices.filter(d => d.id !== deviceToMove.id)
-                    };
-                }
-                return rack;
-            }).map(rack => {
-                // Add to target rack
-                if (rack.id === targetRackId) {
-                    return {
-                        ...rack,
-                        devices: [
-                            ...rack.devices,
-                            { ...deviceToMove, u: targetUnit, rackId: targetRackId }
-                        ]
-                    };
-                }
-                return rack;
-            });
-            
-            toast({
-                title: "Device Moved",
-                description: `${deviceToMove.name} moved to Rack ${targetRack.name}, Unit ${targetUnit}.`,
-            });
-
-            return nextRacks;
+        const otherDevicesInTargetRack = targetRack.devices.filter(d => d.id !== deviceToMove.id);
+        const isOverlap = otherDevicesInTargetRack.some(existingDevice => {
+            const existingDeviceUnits = Array.from({ length: existingDevice.height }, (_, i) => existingDevice.u - i);
+            return newDeviceUnits.some(unit => existingDeviceUnits.includes(unit));
         });
-    }, [toast]);
+
+        if (isOverlap) {
+             toast({ title: "Move Failed", description: "Target location is occupied by another device.", variant: "destructive" });
+             return;
+        }
+
+        setAllDevices(currentDevices => currentDevices.map(d => {
+            if (d.name === deviceToMove.id) {
+                return { ...d, rackId: targetRackId, position: targetUnit };
+            }
+            return d;
+        }));
+        
+        toast({ title: "Device Moved", description: `${deviceToMove.name} moved to Rack ${targetRack.name}, Unit ${targetUnit}.` });
+
+    }, [processedRacks, toast]);
+
+    const handleOpenAddDeviceDialog = (rackId: string, unit: number) => {
+        const rack = processedRacks.find(r => r.id === rackId);
+        if (rack) {
+            setNewDeviceLocation({ rackId, unit });
+            setIsAddDeviceDialogOpen(true);
+        }
+    };
+
+    function onAddDeviceSubmit(data: AddDeviceFormValues) {
+        if (!newDeviceLocation) return;
+        
+        const deviceType = initialDeviceTypes.find(dt => dt.id === data.deviceTypeId);
+        if (!deviceType) return;
+
+        const targetRack = processedRacks.find(r => r.id === newDeviceLocation.rackId);
+        if (!targetRack) return;
+
+        const newDeviceUnits = Array.from({ length: deviceType.u_height }, (_, i) => newDeviceLocation.unit - i);
+
+        if (newDeviceUnits.some(u => u < 1 || u > targetRack.u_height)) {
+            toast({ title: "Error", description: "Device would exceed rack bounds.", variant: "destructive" });
+            return;
+        }
+
+        const isOverlap = targetRack.devices.some(existingDevice => {
+            const existingDeviceUnits = Array.from({ length: existingDevice.height }, (_, i) => existingDevice.u - i);
+            return newDeviceUnits.some(unit => existingDeviceUnits.includes(unit));
+        });
+
+        if (isOverlap) {
+            toast({ title: "Error", description: "Target location is occupied by another device.", variant: "destructive" });
+            return;
+        }
+
+        const newDevice: DeviceType = {
+            name: data.name,
+            deviceRoleId: data.deviceRoleId,
+            deviceTypeId: data.deviceTypeId,
+            rackId: newDeviceLocation.rackId,
+            position: newDeviceLocation.unit,
+            siteId: targetRack.siteId,
+            status: 'active',
+            tags: [],
+            assetTag: `AST-${Math.floor(Math.random() * 9000) + 1000}`,
+            serial: `SN-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+        };
+
+        setAllDevices(prev => [...prev, newDevice]);
+        toast({ title: "Device Added", description: `${newDevice.name} added to Rack ${targetRack.name}.` });
+        setIsAddDeviceDialogOpen(false);
+        form.reset();
+    }
+
 
   return (
     <div className="space-y-6">
@@ -196,7 +242,14 @@ export default function RacksPage() {
                  {filteredRacks.length > 0 ? (
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {filteredRacks.map(rack => (
-                            <Rack key={rack.id} rack={rack} onDragStart={handleDragStart} onDragOver={handleDragOver} onDrop={handleDrop} />
+                            <Rack 
+                                key={rack.id} 
+                                rack={rack} 
+                                onDragStart={handleDragStart} 
+                                onDragOver={handleDragOver} 
+                                onDrop={handleDrop}
+                                onAddDevice={handleOpenAddDeviceDialog}
+                            />
                         ))}
                     </div>
                 ) : (
@@ -206,6 +259,85 @@ export default function RacksPage() {
                 )}
             </CardContent>
         </Card>
+        <Dialog open={isAddDeviceDialogOpen} onOpenChange={setIsAddDeviceDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Add New Device</DialogTitle>
+                    <DialogDescription>
+                        Adding a new device to Rack {processedRacks.find(r => r.id === newDeviceLocation?.rackId)?.name} at Unit {newDeviceLocation?.unit}.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onAddDeviceSubmit)} className="space-y-4 pt-4">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Device Name</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="e.g., core-router-03" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="deviceRoleId"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Role</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {initialDeviceRoles.map((role) => (
+                                        <SelectItem key={role.id} value={role.id}>
+                                        {role.name}
+                                        </SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="deviceTypeId"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Device Type</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a type" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    {initialDeviceTypes.map((type) => (
+                                        <SelectItem key={type.id} value={type.id}>
+                                        {type.manufacturer} - {type.model} ({type.u_height}U)
+                                        </SelectItem>
+                                    ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <DialogFooter>
+                            <Button type="button" variant="ghost" onClick={() => setIsAddDeviceDialogOpen(false)}>Cancel</Button>
+                            <Button type="submit">Add Device</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
     </div>
   )
 }

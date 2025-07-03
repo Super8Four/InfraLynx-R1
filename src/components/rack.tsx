@@ -1,14 +1,15 @@
-
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import type { ProcessedRack, DeviceInRack } from "@/lib/types"
+import { Plus } from "lucide-react"
 
 type RackProps = {
   rack: ProcessedRack
   onDragStart: (event: React.DragEvent<HTMLDivElement>, device: DeviceInRack) => void
   onDragOver: (event: React.DragEvent<HTMLDivElement>) => void
   onDrop: (event: React.DragEvent<HTMLDivElement>, rackId: string, unit: number) => void
+  onAddDevice: (rackId: string, unit: number) => void
 }
 
 const getStatusBadge = (status: ProcessedRack['status']) => {
@@ -24,7 +25,7 @@ const getStatusBadge = (status: ProcessedRack['status']) => {
     }
 }
 
-export default function Rack({ rack, onDragStart, onDragOver, onDrop }: RackProps) {
+export default function Rack({ rack, onDragStart, onDragOver, onDrop, onAddDevice }: RackProps) {
   const { id, u_height = 42, devices, status, name, roleId, comments } = rack
   const units = Array.from({ length: u_height }, (_, i) => u_height - i)
 
@@ -37,7 +38,7 @@ export default function Rack({ rack, onDragStart, onDragOver, onDrop }: RackProp
 
   return (
     <Card 
-        onDrop={(e) => onDrop(e, id, 0)} // Fallback drop on the card itself (less precise)
+        onDrop={(e) => onDrop(e, id, 0)}
         onDragOver={onDragOver}
     >
       <CardHeader>
@@ -86,8 +87,16 @@ export default function Rack({ rack, onDragStart, onDragOver, onDrop }: RackProp
                             key={`empty-${u}`}
                             onDrop={(e) => { e.stopPropagation(); onDrop(e, id, u); }}
                             onDragOver={onDragOver}
-                            className="h-6 border-b border-dashed border-border/50 last:border-b-0 hover:bg-primary/10"
-                        />
+                            className="h-6 border-b border-dashed border-border/50 last:border-b-0 group/unit relative"
+                        >
+                           <button
+                                onClick={() => onAddDevice(id, u)}
+                                className="absolute inset-0 w-full h-full flex items-center justify-center bg-primary/10 opacity-0 group-hover/unit:opacity-100 transition-opacity"
+                                aria-label={`Add device to unit ${u}`}
+                            >
+                                <Plus className="h-4 w-4 text-primary" />
+                            </button>
+                        </div>
                     );
                 })}
             </div>
