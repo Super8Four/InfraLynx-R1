@@ -16,8 +16,7 @@ import type { DeviceInRack, ProcessedRack } from "@/lib/types"
 
 
 export default function RacksPage() {
-    // Memoize the initial processing of data to avoid re-computation on every render
-    const initialProcessedRacks = useMemo((): ProcessedRack[] => {
+    const [racks, setRacks] = useState<ProcessedRack[]>(() => {
         const deviceMap = new Map<string, typeof initialDevices>();
         initialDevices.forEach(device => {
             if (device.rackId) {
@@ -34,7 +33,7 @@ export default function RacksPage() {
                 const deviceType = initialDeviceTypes.find(dt => dt.id === device.deviceTypeId);
                 const deviceRole = initialDeviceRoles.find(dr => dr.id === device.deviceRoleId);
                 return {
-                    id: device.name, // Using name as a unique ID for this context
+                    id: device.name,
                     name: device.name,
                     u: device.position || 0,
                     height: deviceType?.u_height || 1,
@@ -42,14 +41,16 @@ export default function RacksPage() {
                     role: deviceRole?.name || 'Unknown',
                     rackId: rack.id,
                 };
-            }).filter(d => d.u > 0); // Only include devices with a position
+            }).filter(d => d.u > 0);
 
             return { ...rack, devices: devicesInRack };
         });
-    }, []);
+    });
 
-    const [racks, setRacks] = useState<ProcessedRack[]>(initialProcessedRacks);
-    const sites = useMemo(() => initialSites.filter(site => racks.some(r => r.siteId === site.id)), [racks]);
+    const sites = useMemo(() => {
+        const siteIdsWithRacks = new Set(racks.map(r => r.siteId));
+        return initialSites.filter(site => siteIdsWithRacks.has(site.id));
+    }, [racks]);
 
     const handleDragStart = useCallback((event: React.DragEvent<HTMLDivElement>, device: DeviceInRack) => {
         event.dataTransfer.setData("application/json", JSON.stringify(device));
@@ -72,24 +73,55 @@ export default function RacksPage() {
         if(deviceToMove.rackId === targetRackId && deviceToMove.u === targetUnit) return;
 
         setRacks(currentRacks => {
-            const newRacks = JSON.parse(JSON.stringify(currentRacks)) as ProcessedRack[];
+            const targetRack = currentRacks.find(r => r.id === targetRackId);
+            if (!targetRack) return currentRacks;
 
-            // Find and remove the device from its original rack
-            const sourceRack = newRacks.find(r => r.id === deviceToMove.rackId);
-            if (sourceRack) {
-                sourceRack.devices = sourceRack.devices.filter(d => d.id !== deviceToMove.id);
+            // Check for conflicts in the target rack before making any changes
+            const newDeviceUnits = Array.from({ length: deviceToMove.height }, (_, i) => targetUnit - i);
+            
+            // Check if device goes out of bounds
+            if (newDeviceUnits.some(u => u < 1 || u > targetRack.u_height)) {
+                console.error("Device is out of bounds");
+                return currentRacks;
             }
 
-            // Find the target rack and add the device
-            const targetRack = newRacks.find(r => r.id === targetRackId);
-            if (targetRack) {
-                // Update device properties
-                deviceToMove.rackId = targetRackId;
-                deviceToMove.u = targetUnit;
-                targetRack.devices.push(deviceToMove);
+            const otherDevicesInTargetRack = targetRack.devices.filter(d => d.id !== deviceToMove.id);
+
+            const isOverlap = otherDevicesInTargetRack.some(existingDevice => {
+                const existingDeviceUnits = Array.from({ length: existingDevice.height }, (_, i) => existingDevice.u - i);
+                return newDeviceUnits.some(unit => existingDeviceUnits.includes(unit));
+            });
+
+            if (isOverlap) {
+                console.error("Cannot drop device here, it overlaps with another device.");
+                return currentRacks;
             }
 
-            return newRacks;
+            // If no conflicts, proceed with the state update
+            const nextRacks = currentRacks.map(rack => {
+                // Remove from source rack
+                if (rack.id === deviceToMove.rackId) {
+                    return {
+                        ...rack,
+                        devices: rack.devices.filter(d => d.id !== deviceToMove.id)
+                    };
+                }
+                return rack;
+            }).map(rack => {
+                // Add to target rack
+                if (rack.id === targetRackId) {
+                    return {
+                        ...rack,
+                        devices: [
+                            ...rack.devices,
+                            { ...deviceToMove, u: targetUnit, rackId: targetRackId }
+                        ]
+                    };
+                }
+                return rack;
+            });
+
+            return nextRacks;
         });
     }, []);
 
