@@ -195,32 +195,32 @@ export default function DashboardPage() {
         const stackedLayout = (cols: number) => {
             if (isBranchingEnabled) {
                 return [
-                    { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false, isDraggable: false },
-                    { i: "branching", x: 0, y: 1, w: cols, h: 4 },
-                    { i: "ip-usage", x: 0, y: 5, w: cols, h: 4 },
-                    { i: "activity", x: 0, y: 9, w: cols, h: 4 },
+                    { i: "stats", x: 0, y: 0, w: cols, h: 2, isResizable: false, isDraggable: false },
+                    { i: "branching", x: 0, y: 2, w: cols, h: 4 },
+                    { i: "ip-usage", x: 0, y: 6, w: cols, h: 4 },
+                    { i: "activity", x: 0, y: 10, w: cols, h: 4 },
                 ];
             }
             return [
-                { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false, isDraggable: false },
-                { i: "ip-usage", x: 0, y: 1, w: cols, h: 4 },
-                { i: "activity", x: 0, y: 5, w: cols, h: 4 },
+                { i: "stats", x: 0, y: 0, w: cols, h: 2, isResizable: false, isDraggable: false },
+                { i: "ip-usage", x: 0, y: 2, w: cols, h: 4 },
+                { i: "activity", x: 0, y: 6, w: cols, h: 4 },
             ];
         };
         
         const sideBySideLayout = (cols: number, split: number) => {
              if (isBranchingEnabled) {
                 return [
-                    { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false, isDraggable: false },
-                    { i: "branching", x: 0, y: 1, w: split, h: 4 },
-                    { i: "ip-usage", x: split, y: 1, w: cols - split, h: 4 },
-                    { i: "activity", x: 0, y: 5, w: cols, h: 4 },
+                    { i: "stats", x: 0, y: 0, w: cols, h: 2, isResizable: false, isDraggable: false },
+                    { i: "branching", x: 0, y: 2, w: split, h: 4 },
+                    { i: "ip-usage", x: split, y: 2, w: cols - split, h: 4 },
+                    { i: "activity", x: 0, y: 6, w: cols, h: 4 },
                 ];
              }
              return [
-                 { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false, isDraggable: false },
-                 { i: "ip-usage", x: 0, y: 1, w: Math.floor(cols / 2), h: 4 },
-                 { i: "activity", x: Math.floor(cols / 2), y: 1, w: Math.ceil(cols / 2), h: 4 },
+                 { i: "stats", x: 0, y: 0, w: cols, h: 2, isResizable: false, isDraggable: false },
+                 { i: "ip-usage", x: 0, y: 2, w: Math.floor(cols / 2), h: 4 },
+                 { i: "activity", x: Math.floor(cols / 2), y: 2, w: Math.ceil(cols / 2), h: 4 },
              ];
         }
 
