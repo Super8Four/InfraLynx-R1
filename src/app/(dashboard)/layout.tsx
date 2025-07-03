@@ -1,4 +1,3 @@
-
 "use client"
 
 import {
@@ -10,7 +9,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import { LifeBuoy } from "lucide-react"
+import { LifeBuoy, Github } from "lucide-react"
 import DashboardHeader from "@/components/dashboard-header"
 import { NavLinks } from "@/components/nav-links"
 import { Button } from "@/components/ui/button"
@@ -83,6 +82,17 @@ export default function DashboardLayout({
         <main className="flex-1 overflow-auto bg-muted/30 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
+        <footer className="border-t bg-background/95 px-6 py-4 text-center text-sm text-muted-foreground">
+          <a
+            href="https://github.com/Super8Four/InfraLynx-R1"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
+          >
+            <Github className="h-4 w-4" />
+            <span>View on GitHub</span>
+          </a>
+        </footer>
       </SidebarInset>
     </SidebarProvider>
   )
