@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
@@ -50,7 +51,11 @@ export default function RacksPage() {
 
     const form = useForm<AddDeviceFormValues>({
         resolver: zodResolver(addDeviceSchema),
-        defaultValues: {},
+        defaultValues: {
+            name: "",
+            deviceTypeId: "",
+            deviceRoleId: "",
+        },
     });
 
     const processedRacks = useMemo((): ProcessedRack[] => {
@@ -341,3 +346,5 @@ export default function RacksPage() {
     </div>
   )
 }
+
+  
