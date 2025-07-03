@@ -15,7 +15,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { initialDevices as allDevices } from "@/lib/data"
+import { initialDevices as allDevices, initialDeviceRoles } from "@/lib/data"
 
 type Device = {
   id: string
@@ -43,14 +43,21 @@ const connections: Connection[] = [
 const connectedDeviceIds = new Set(connections.flatMap((c) => [c.from, c.to]))
 const initialDeviceData = allDevices
   .filter((d) => connectedDeviceIds.has(d.name))
-  .map((d) => ({
-    id: d.name,
-    name: d.name,
-    role: d.role,
-  }))
+  .map((d) => {
+    const roleInfo = initialDeviceRoles.find(role => role.id === d.deviceRoleId)
+    return {
+      id: d.name,
+      name: d.name,
+      role: roleInfo?.name ?? "Unknown",
+    }
+  })
 
 const DeviceIcon = ({ role }: { role: string }) => {
   const iconProps = { className: "h-6 w-6 text-primary" }
+
+  if (!role) {
+    return <Server {...iconProps} className="h-6 w-6 text-muted-foreground" />
+  }
 
   if (role.toLowerCase().includes("switch")) {
     return <Network {...iconProps} />
