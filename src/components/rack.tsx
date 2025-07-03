@@ -1,30 +1,17 @@
+
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-
-type Device = {
-  id: number
-  name: string
-  u: number
-  height: number
-  color: string
-  role?: string
-}
-
-type RackInfo = {
-  id: string
-  status: "active" | "planned" | "decommissioned"
-  role: string
-  devices: Device[]
-  uHeight?: number
-  comments?: string
-}
+import type { ProcessedRack, DeviceInRack } from "@/lib/types"
 
 type RackProps = {
-  rack: RackInfo
+  rack: ProcessedRack
+  onDragStart: (event: React.DragEvent<HTMLDivElement>, device: DeviceInRack) => void
+  onDragOver: (event: React.DragEvent<HTMLDivElement>) => void
+  onDrop: (event: React.DragEvent<HTMLDivElement>, rackId: string, unit: number) => void
 }
 
-const getStatusBadge = (status: RackInfo['status']) => {
+const getStatusBadge = (status: ProcessedRack['status']) => {
     switch (status) {
       case "active":
         return <Badge className="capitalize bg-green-500/20 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-500/20">{status}</Badge>
@@ -37,12 +24,11 @@ const getStatusBadge = (status: RackInfo['status']) => {
     }
 }
 
+export default function Rack({ rack, onDragStart, onDragOver, onDrop }: RackProps) {
+  const { id, u_height = 42, devices, status, name, description, comments } = rack
+  const units = Array.from({ length: u_height }, (_, i) => u_height - i)
 
-export default function Rack({ rack }: RackProps) {
-  const { id, uHeight = 42, devices, status, role, comments } = rack
-  const units = Array.from({ length: uHeight }, (_, i) => uHeight - i)
-
-  const mountedDevices = new Map<number, Device>()
+  const mountedDevices = new Map<number, DeviceInRack>()
   devices.forEach((device) => {
     for (let i = 0; i < device.height; i++) {
       mountedDevices.set(device.u - i, device)
@@ -50,13 +36,16 @@ export default function Rack({ rack }: RackProps) {
   })
 
   return (
-    <Card>
+    <Card 
+        onDrop={(e) => onDrop(e, id, 0)} // Fallback drop on the card itself (less precise)
+        onDragOver={onDragOver}
+    >
       <CardHeader>
         <div className="flex items-center justify-between">
-            <CardTitle>{id}</CardTitle>
+            <CardTitle>{name}</CardTitle>
             {getStatusBadge(status)}
         </div>
-        <CardDescription>{role}</CardDescription>
+        <CardDescription>{description || 'No role assigned'}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex justify-between gap-2">
@@ -66,9 +55,13 @@ export default function Rack({ rack }: RackProps) {
               if (device && device.u === u) {
                 return (
                   <div
-                    key={u}
+                    key={`${device.id}-${u}`}
+                    draggable
+                    onDragStart={(e) => onDragStart(e, device)}
+                    onDrop={(e) => { e.stopPropagation(); onDrop(e, id, u) }}
+                    onDragOver={onDragOver}
                     className={cn(
-                      "flex items-center justify-center text-white text-xs font-semibold border-x border-b border-border",
+                      "flex items-center justify-center text-white text-xs font-semibold border-x border-b border-border cursor-move",
                       device.color
                     )}
                     style={{ height: `${device.height * 1.5}rem` }}
@@ -83,6 +76,8 @@ export default function Rack({ rack }: RackProps) {
               return (
                 <div
                   key={u}
+                  onDrop={(e) => onDrop(e, id, u)}
+                  onDragOver={onDragOver}
                   className="h-6 border-b border-dashed border-border last:border-b-0"
                 />
               )
