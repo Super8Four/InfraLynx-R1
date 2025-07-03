@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState } from "react"
@@ -61,6 +62,7 @@ export default function BranchingPage() {
 
   const [isAddBranchOpen, setIsAddBranchOpen] = useState(false)
   const [isMergeConfirmOpen, setIsMergeConfirmOpen] = useState(false)
+  const [isGraphModalOpen, setIsGraphModalOpen] = useState(false)
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchSchema),
@@ -83,6 +85,7 @@ export default function BranchingPage() {
   }
   
   const currentBranchIsMergable = activeBranch !== 'main' && !branches.find(b => b.id === activeBranch)?.merged;
+  const recentCommits = commits.slice(0, 20);
 
   return (
     <div className="space-y-6">
@@ -188,10 +191,12 @@ export default function BranchingPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Branch Graph</CardTitle>
-                    <CardDescription>Visualization of your configuration branches.</CardDescription>
+                    <CardDescription>Visualization of recent changes. Click graph to view full history.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                   <BranchGraph branches={branches} commits={commits} activeBranch={activeBranch} />
+                   <div className="cursor-pointer" onClick={() => setIsGraphModalOpen(true)}>
+                    <BranchGraph branches={branches} commits={recentCommits} activeBranch={activeBranch} />
+                   </div>
                 </CardContent>
             </Card>
 
@@ -223,6 +228,19 @@ export default function BranchingPage() {
             </Card>
         </div>
       </div>
+      <Dialog open={isGraphModalOpen} onOpenChange={setIsGraphModalOpen}>
+        <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Full Branch History</DialogTitle>
+            <DialogDescription>
+              Complete visualization of all configuration branches and commits.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto p-4 border rounded-md bg-muted/20">
+            <BranchGraph branches={branches} commits={commits} activeBranch={activeBranch} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
