@@ -52,8 +52,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useSettings } from "@/context/settings-context"
+import { Skeleton } from "@/components/ui/skeleton"
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
+
+const LAYOUT_STORAGE_KEY = 'dashboard-layout-v2';
 
 // This is mock data, in a real app this would be fetched from a DB
 // and likely would be more complex to represent activity.
@@ -155,8 +158,20 @@ function BranchingWidget() {
   )
 }
 
+function DashboardSkeleton() {
+    return (
+        <div className="grid gap-6 auto-rows-[118px] grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <Skeleton className="h-full col-span-full" />
+            <Skeleton className="h-full lg:col-span-2" />
+            <Skeleton className="h-full lg:col-span-2" />
+            <Skeleton className="h-full col-span-full" />
+        </div>
+    )
+}
+
 export default function DashboardPage() {
   const { settings } = useSettings()
+  const [layouts, setLayouts] = React.useState(null);
 
   // In a real app, these stats would come from props passed by a server component
   const STATS = [
@@ -190,55 +205,85 @@ export default function DashboardPage() {
     },
   ]
 
-  const layouts = React.useMemo(() => {
-    const getLayouts = (isBranchingEnabled: boolean) => {
-        const stackedLayout = (cols: number) => {
-            if (isBranchingEnabled) {
+  React.useEffect(() => {
+    const generateDefaultLayouts = (isBranchingEnabled: boolean) => {
+        const getLayouts = () => {
+            const stackedLayout = (cols: number) => {
+                if (isBranchingEnabled) {
+                    return [
+                        { i: "stats", x: 0, y: 0, w: cols, h: 2, isDraggable: false },
+                        { i: "branching", x: 0, y: 2, w: cols, h: 4 },
+                        { i: "ip-usage", x: 0, y: 6, w: cols, h: 4 },
+                        { i: "activity", x: 0, y: 10, w: cols, h: 4 },
+                    ];
+                }
                 return [
-                    { i: "stats", x: 0, y: 0, w: cols, h: 2, isResizable: false, isDraggable: false },
-                    { i: "branching", x: 0, y: 2, w: cols, h: 4 },
-                    { i: "ip-usage", x: 0, y: 6, w: cols, h: 4 },
-                    { i: "activity", x: 0, y: 10, w: cols, h: 4 },
-                ];
-            }
-            return [
-                { i: "stats", x: 0, y: 0, w: cols, h: 2, isResizable: false, isDraggable: false },
-                { i: "ip-usage", x: 0, y: 2, w: cols, h: 4 },
-                { i: "activity", x: 0, y: 6, w: cols, h: 4 },
-            ];
-        };
-        
-        const sideBySideLayout = (cols: number, split: number) => {
-             if (isBranchingEnabled) {
-                return [
-                    { i: "stats", x: 0, y: 0, w: cols, h: 2, isResizable: false, isDraggable: false },
-                    { i: "branching", x: 0, y: 2, w: split, h: 4 },
-                    { i: "ip-usage", x: split, y: 2, w: cols - split, h: 4 },
+                    { i: "stats", x: 0, y: 0, w: cols, h: 2, isDraggable: false },
+                    { i: "ip-usage", x: 0, y: 2, w: cols, h: 4 },
                     { i: "activity", x: 0, y: 6, w: cols, h: 4 },
                 ];
-             }
-             return [
-                 { i: "stats", x: 0, y: 0, w: cols, h: 2, isResizable: false, isDraggable: false },
-                 { i: "ip-usage", x: 0, y: 2, w: Math.floor(cols / 2), h: 4 },
-                 { i: "activity", x: Math.floor(cols / 2), y: 2, w: Math.ceil(cols / 2), h: 4 },
-             ];
-        }
+            };
+            
+            const sideBySideLayout = (cols: number, split: number) => {
+                 if (isBranchingEnabled) {
+                    return [
+                        { i: "stats", x: 0, y: 0, w: cols, h: 2, isDraggable: false },
+                        { i: "branching", x: 0, y: 2, w: split, h: 4 },
+                        { i: "ip-usage", x: split, y: 2, w: cols - split, h: 4 },
+                        { i: "activity", x: 0, y: 6, w: cols, h: 4 },
+                    ];
+                 }
+                 return [
+                     { i: "stats", x: 0, y: 0, w: cols, h: 2, isDraggable: false },
+                     { i: "ip-usage", x: 0, y: 2, w: Math.floor(cols / 2), h: 4 },
+                     { i: "activity", x: Math.floor(cols / 2), y: 2, w: Math.ceil(cols / 2), h: 4 },
+                 ];
+            }
 
-        return {
-            lg: sideBySideLayout(12, 7),
-            md: sideBySideLayout(10, 5),
-            sm: stackedLayout(6),
-            xs: stackedLayout(4),
-            xxs: stackedLayout(2),
+            return {
+                lg: sideBySideLayout(12, 7),
+                md: sideBySideLayout(10, 5),
+                sm: stackedLayout(6),
+                xs: stackedLayout(4),
+                xxs: stackedLayout(2),
+            };
         };
+        return getLayouts();
     };
-    
-    return getLayouts(settings.isBranchingEnabled);
-}, [settings.isBranchingEnabled]);
+
+    let finalLayouts = generateDefaultLayouts(settings.isBranchingEnabled);
+    try {
+        const savedLayoutsJSON = localStorage.getItem(LAYOUT_STORAGE_KEY);
+        if (savedLayoutsJSON) {
+            const savedLayouts = JSON.parse(savedLayoutsJSON);
+            const hasBranchingWidget = savedLayouts.lg?.some((item: { i: string }) => item.i === 'branching');
+            // Check if saved layout is compatible with current branching setting
+            if (settings.isBranchingEnabled === hasBranchingWidget) {
+                finalLayouts = savedLayouts;
+            }
+        }
+    } catch (error) {
+        console.error("Failed to load layout from localStorage:", error);
+    }
+    setLayouts(finalLayouts as any);
+  }, [settings.isBranchingEnabled]);
+
+  const onLayoutChange = (layout: any, allLayouts: any) => {
+      try {
+          localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(allLayouts));
+      } catch (error) {
+          console.error("Could not save layout:", error);
+      }
+  };
+
+  if (!layouts) {
+      return <DashboardSkeleton />;
+  }
 
   return (
     <ResponsiveGridLayout
       layouts={layouts}
+      onLayoutChange={onLayoutChange}
       breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
       cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
       rowHeight={95}
