@@ -30,14 +30,15 @@ type BranchingContextType = {
   updateFromMain: () => void
 }
 
+const generateCommitId = () => Math.random().toString(16).slice(2, 9);
+
 const initialBranches: Branch[] = [
   { id: "main", name: "main", from: "", merged: false },
 ]
 
-// This is now just the starting point. The context will manage the history.
 const initialCommits: Commit[] = [
-  { id: 'c2', message: "chore: Setup initial project structure", branch: 'main', author: 'system', timestamp: '2 days ago', body: 'Added basic pages and components.' },
-  { id: 'c1', message: "Initial commit", branch: "main", author: "system", timestamp: "3 days ago", body: "System initialization." },
+  { id: 'f7c3b1e', message: "chore: Setup initial project structure", branch: 'main', author: 'system', timestamp: '2 days ago', body: 'Added basic pages and components.' },
+  { id: 'a4d7e8f', message: "Initial commit", branch: "main", author: "system", timestamp: "3 days ago", body: "System initialization." },
 ]
 
 const BranchingContext = createContext<BranchingContextType | undefined>(undefined);
@@ -60,7 +61,7 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
       merged: false,
     }
     const creationCommit: Commit = {
-        id: `c${Date.now()}`,
+        id: generateCommitId(),
         message: `feat: Create branch '${name}' from '${fromBranch}'`,
         branch: name,
         author: 'admin',
@@ -87,8 +88,8 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
       : 'No new commits on this branch.';
 
     const mergeCommit: Commit = {
-      id: `c${Date.now() + Math.random()}`,
-      message: mergeMessage?.trim() || `merge: Merge branch '${currentBranch.name}'`,
+      id: generateCommitId(),
+      message: `merge: ${mergeMessage?.trim() || `Merge branch '${currentBranch.name}'`}`,
       body: `This would trigger server actions to persist changes to the database.\n\nChanges:\n${commitSummaries}`,
       branch: currentBranch.from,
       author: 'admin',
@@ -109,7 +110,7 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const mergeCommit: Commit = {
-      id: `c${Date.now() + Math.random()}`,
+      id: generateCommitId(),
       message: `merge: Merge branch 'main' into '${currentBranch.name}'`,
       body: `Pulled latest updates from main branch.`,
       branch: currentBranch.name,
@@ -126,7 +127,7 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
       if (activeBranch === 'main') return;
 
       const newCommit: Commit = {
-          id: `c${Date.now()}`,
+          id: generateCommitId(),
           message,
           body,
           branch: activeBranch,
