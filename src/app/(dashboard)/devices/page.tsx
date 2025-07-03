@@ -8,6 +8,8 @@ import {
   File,
   ListFilter,
   Search,
+  Activity,
+  Loader2,
 } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -153,6 +155,7 @@ export default function DevicesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [deviceToDelete, setDeviceToDelete] = useState<string | null>(null)
+  const [pingingStatus, setPingingStatus] = useState<Record<string, boolean>>({});
 
   const form = useForm<DeviceFormValues>({
     resolver: zodResolver(deviceSchema),
@@ -197,6 +200,33 @@ export default function DevicesPage() {
     setDeviceToDelete(deviceName)
     setIsDeleteDialogOpen(true)
   }
+
+  const handlePingDevice = (deviceName: string) => {
+    setPingingStatus(prev => ({ ...prev, [deviceName]: true }));
+    toast({ title: `Pinging ${deviceName}...` });
+
+    setTimeout(() => {
+        const isSuccess = Math.random() > 0.2; // 80% success rate
+        
+        setDevices(prevDevices => 
+            prevDevices.map(d => 
+                d.name === deviceName 
+                    ? { ...d, status: isSuccess ? 'active' : 'offline' } 
+                    : d
+            )
+        );
+
+        toast({ 
+            title: isSuccess ? `Ping to ${deviceName} successful!` : `Ping to ${deviceName} failed.`,
+            description: isSuccess ? 'Device is now marked as active.' : 'Device is now marked as offline.',
+            variant: isSuccess ? 'default' : 'destructive',
+        });
+
+        setPingingStatus(prev => ({ ...prev, [deviceName]: false }));
+
+    }, 1500);
+  };
+
 
   const getStatusBadge = (status: Device['status']) => {
     switch (status) {
@@ -399,6 +429,7 @@ export default function DevicesPage() {
               {devices.map((device) => {
                 const deviceRole = getDeviceRole(device.deviceRoleId);
                 const siteName = getSiteName(device.siteId);
+                const isPinging = pingingStatus[device.name];
                 return (
                 <TableRow key={device.name}>
                   <TableCell className="font-medium">{device.name}</TableCell>
@@ -435,6 +466,17 @@ export default function DevicesPage() {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem>Edit</DropdownMenuItem>
                         <DropdownMenuItem>View Interfaces</DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => handlePingDevice(device.name)}
+                            disabled={isPinging}
+                        >
+                            {isPinging ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                            <Activity className="mr-2 h-4 w-4" />
+                            )}
+                            <span>{isPinging ? "Pinging..." : "Ping Device"}</span>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
