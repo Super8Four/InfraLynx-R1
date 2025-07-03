@@ -26,13 +26,21 @@ type BranchGraphProps = {
   branches: Branch[];
   commits: Commit[];
   activeBranch: string;
+  orientation?: 'horizontal' | 'vertical';
 };
 
-const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBranch }) => {
-  const { nodes, edges, branchLabels } = React.useMemo(() => {
+const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBranch, orientation = 'horizontal' }) => {
+  const { nodes, edges, branchLabels, width, height } = React.useMemo(() => {
+    const isHorizontal = orientation === 'horizontal';
+    
     const branchOrder = ['main', ...branches.filter(b => b.name !== 'main').map(b => b.name)];
-    const branchY = new Map<string, number>();
-    branchOrder.forEach((name, i) => branchY.set(name, (i * 40) + 20));
+    const branchLane = new Map<string, number>();
+    
+    if (isHorizontal) {
+        branchOrder.forEach((name, i) => branchLane.set(name, (i * 40) + 20)); // y-lanes
+    } else {
+        branchOrder.forEach((name, i) => branchLane.set(name, (i * 60) + 40)); // x-lanes
+    }
 
     const commitNodes: Node[] = [];
     const commitEdges: Edge[] = [];
@@ -41,39 +49,45 @@ const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBran
     const finalLabels: { name: string; x: number; y: number }[] = [];
 
     const reversedCommits = [...commits].reverse();
-    let xOffset = 30;
+    let mainAxisOffset = 30;
 
     reversedCommits.forEach((commit) => {
-      const y = branchY.get(commit.branch) || 0;
-      const isMergeCommit = commit.message.startsWith('merge:');
-      
-      const newNode: Node = { id: commit.id, x: xOffset, y, branch: commit.branch, isMergeCommit };
-      commitNodes.push(newNode);
-      commitMap.set(commit.id, newNode);
+        const crossAxisPosition = branchLane.get(commit.branch) || 0;
+        const isMergeCommit = commit.message.startsWith('merge:');
+        
+        const newNode: Node = { 
+            id: commit.id, 
+            x: isHorizontal ? mainAxisOffset : crossAxisPosition, 
+            y: isHorizontal ? crossAxisPosition : mainAxisOffset, 
+            branch: commit.branch, 
+            isMergeCommit 
+        };
+        commitNodes.push(newNode);
+        commitMap.set(commit.id, newNode);
 
-      const parentId = branchHeads.get(commit.branch);
-      if (parentId) {
-        commitEdges.push({ id: `${parentId}-${commit.id}`, source: parentId, target: commit.id, isMerge: false });
-      }
-
-      const branchInfo = branches.find(b => b.name === commit.branch);
-      if (branchInfo && branchInfo.from && commit.message.includes(`Create branch '${commit.branch}'`)) {
-        const fromBranchHead = branchHeads.get(branchInfo.from);
-        if (fromBranchHead) {
-          commitEdges.push({ id: `${fromBranchHead}-${commit.id}`, source: fromBranchHead, target: commit.id, isMerge: false });
+        const parentId = branchHeads.get(commit.branch);
+        if (parentId) {
+            commitEdges.push({ id: `${parentId}-${commit.id}`, source: parentId, target: commit.id, isMerge: false });
         }
-      }
 
-      if (isMergeCommit) {
-        const mergeSourceBranch = commit.message.split("'")[1];
-        const sourceBranchHead = branchHeads.get(mergeSourceBranch);
-        if (sourceBranchHead) {
-          commitEdges.push({ id: `${sourceBranchHead}-${commit.id}`, source: sourceBranchHead, target: commit.id, isMerge: true });
+        const branchInfo = branches.find(b => b.name === commit.branch);
+        if (branchInfo && branchInfo.from && commit.message.includes(`Create branch '${commit.branch}'`)) {
+            const fromBranchHead = branchHeads.get(branchInfo.from);
+            if (fromBranchHead) {
+                commitEdges.push({ id: `${fromBranchHead}-${commit.id}`, source: fromBranchHead, target: commit.id, isMerge: false });
+            }
         }
-      }
 
-      branchHeads.set(commit.branch, commit.id);
-      xOffset += 50;
+        if (isMergeCommit) {
+            const mergeSourceBranch = commit.message.split("'")[1];
+            const sourceBranchHead = branchHeads.get(mergeSourceBranch);
+            if (sourceBranchHead) {
+                commitEdges.push({ id: `${sourceBranchHead}-${commit.id}`, source: sourceBranchHead, target: commit.id, isMerge: true });
+            }
+        }
+
+        branchHeads.set(commit.branch, commit.id);
+        mainAxisOffset += 50;
     });
 
     branches.forEach(branch => {
@@ -81,16 +95,21 @@ const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBran
         if (headCommitId) {
             const headNode = commitMap.get(headCommitId);
             if(headNode) {
-                 finalLabels.push({ name: branch.name, x: headNode.x + 15, y: headNode.y + 4 });
+                 finalLabels.push({ 
+                    name: branch.name, 
+                    x: headNode.x + (isHorizontal ? 15 : 0), 
+                    y: headNode.y + (isHorizontal ? 4 : 25) 
+                });
             }
         }
     })
 
-    return { nodes: commitNodes, edges: commitEdges, branchLabels: finalLabels };
-  }, [branches, commits]);
+    const calculatedWidth = isHorizontal ? Math.max(400, (commits.length * 50) + 150) : branches.length * 60 + 100;
+    const calculatedHeight = isHorizontal ? branches.length * 40 + 20 : commits.length * 50 + 60;
+    
+    return { nodes: commitNodes, edges: commitEdges, branchLabels: finalLabels, width: calculatedWidth, height: calculatedHeight };
 
-  const width = Math.max(400, (commits.length * 50) + 150);
-  const height = branches.length * 40 + 20;
+  }, [branches, commits, orientation]);
 
   const branchColors = [
     '#3b82f6', // blue-500
@@ -105,19 +124,27 @@ const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBran
     const index = branches.findIndex(b => b.name === branchName);
     return branchColors[index % branchColors.length];
   }
+  
+  const getPathD = (sourceNode: Node, targetNode: Node) => {
+    if (orientation === 'horizontal') {
+        return `M ${sourceNode.x} ${sourceNode.y} C ${sourceNode.x + 25} ${sourceNode.y}, ${targetNode.x - 25} ${targetNode.y}, ${targetNode.x} ${targetNode.y}`;
+    }
+    return `M ${sourceNode.x} ${sourceNode.y} C ${sourceNode.x} ${sourceNode.y + 25}, ${targetNode.x} ${targetNode.y - 25}, ${targetNode.x} ${targetNode.y}`;
+  }
+  
+  const getLabelAnchor = () => orientation === 'horizontal' ? 'start' : 'middle';
 
   return (
-    <div className="w-full overflow-x-auto bg-muted/30 p-4 rounded-lg">
-      <svg width={width} height={height} className="min-w-full">
+    <div className={orientation === 'horizontal' ? "w-full overflow-x-auto bg-muted/30 p-4 rounded-lg" : "h-full w-full overflow-y-auto bg-muted/30 p-4 rounded-lg"}>
+      <svg width={width} height={height} className={orientation === 'horizontal' ? "min-w-full" : "min-h-full"}>
         {edges.map(edge => {
           const sourceNode = nodes.find(n => n.id === edge.source);
           const targetNode = nodes.find(n => n.id === edge.target);
           if (!sourceNode || !targetNode) return null;
           
           const color = getBranchColor(sourceNode.branch);
-          const pathD = `M ${sourceNode.x} ${sourceNode.y} C ${sourceNode.x + 25} ${sourceNode.y}, ${targetNode.x - 25} ${targetNode.y}, ${targetNode.x} ${targetNode.y}`;
 
-          return <path key={edge.id} d={pathD} stroke={color} strokeWidth="2" fill="none" />;
+          return <path key={edge.id} d={getPathD(sourceNode, targetNode)} stroke={color} strokeWidth="2" fill="none" />;
         })}
 
         {nodes.map(node => (
@@ -135,12 +162,11 @@ const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBran
         ))}
 
         {branchLabels.map(label => (
-            <text key={label.name} x={label.x} y={label.y} fill="hsl(var(--foreground))" fontSize="12" className="font-semibold">
+            <text key={label.name} x={label.x} y={label.y} fill="hsl(var(--foreground))" fontSize="12" className="font-semibold" textAnchor={getLabelAnchor()}>
                 <GitBranch className="inline h-3 w-3 mr-1" style={{color: getBranchColor(label.name)}} />
                 {label.name}
             </text>
         ))}
-
       </svg>
     </div>
   );

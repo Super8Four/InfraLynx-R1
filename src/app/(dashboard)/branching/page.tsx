@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from "react"
-import { GitBranch, GitMerge, Archive, PlusCircle, Check, ChevronsRight, ArrowDownToLine } from "lucide-react"
+import { GitBranch, GitMerge, Archive, PlusCircle, Check, ChevronsRight, ArrowDownToLine, Maximize } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -299,7 +299,7 @@ export default function BranchingPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-auto p-4 border rounded-md bg-muted/20">
-            <BranchGraph branches={branches} commits={commits} activeBranch={activeBranch} />
+            <BranchGraph branches={branches} commits={commits} activeBranch={activeBranch} orientation="vertical" />
           </div>
         </DialogContent>
       </Dialog>
