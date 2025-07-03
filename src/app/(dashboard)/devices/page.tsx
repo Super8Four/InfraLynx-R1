@@ -11,6 +11,7 @@ import {
   Activity,
   Loader2,
 } from "lucide-react"
+import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -186,7 +187,7 @@ export default function DevicesPage() {
 
   const handleDeleteConfirm = () => {
     if (deviceToDelete) {
-      setDevices((prev) => prev.filter((d) => d.name !== deviceToDelete))
+      setDevices((prev) => prev.filter((d) => d.id !== deviceToDelete))
       toast({
         title: "Success",
         description: `Device "${deviceToDelete}" has been deleted.`,
@@ -196,33 +197,36 @@ export default function DevicesPage() {
     setDeviceToDelete(null)
   }
 
-  const openDeleteDialog = (deviceName: string) => {
-    setDeviceToDelete(deviceName)
+  const openDeleteDialog = (deviceId: string) => {
+    setDeviceToDelete(deviceId)
     setIsDeleteDialogOpen(true)
   }
 
-  const handlePingDevice = (deviceName: string) => {
-    setPingingStatus(prev => ({ ...prev, [deviceName]: true }));
-    toast({ title: `Pinging ${deviceName}...` });
+  const handlePingDevice = (deviceId: string) => {
+    const device = devices.find(d => d.id === deviceId)
+    if (!device) return;
+
+    setPingingStatus(prev => ({ ...prev, [deviceId]: true }));
+    toast({ title: `Pinging ${device.name}...` });
 
     setTimeout(() => {
         const isSuccess = Math.random() > 0.2; // 80% success rate
         
         setDevices(prevDevices => 
             prevDevices.map(d => 
-                d.name === deviceName 
+                d.id === deviceId 
                     ? { ...d, status: isSuccess ? 'active' : 'offline' } 
                     : d
             )
         );
 
         toast({ 
-            title: isSuccess ? `Ping to ${deviceName} successful!` : `Ping to ${deviceName} failed.`,
+            title: isSuccess ? `Ping to ${device.name} successful!` : `Ping to ${device.name} failed.`,
             description: isSuccess ? 'Device is now marked as active.' : 'Device is now marked as offline.',
             variant: isSuccess ? 'default' : 'destructive',
         });
 
-        setPingingStatus(prev => ({ ...prev, [deviceName]: false }));
+        setPingingStatus(prev => ({ ...prev, [deviceId]: false }));
 
     }, 1500);
   };
@@ -429,10 +433,14 @@ export default function DevicesPage() {
               {devices.map((device) => {
                 const deviceRole = getDeviceRole(device.deviceRoleId);
                 const siteName = getSiteName(device.siteId);
-                const isPinging = pingingStatus[device.name];
+                const isPinging = pingingStatus[device.id!];
                 return (
-                <TableRow key={device.name}>
-                  <TableCell className="font-medium">{device.name}</TableCell>
+                <TableRow key={device.id}>
+                  <TableCell className="font-medium">
+                    <Link href={`/devices/${device.id}`} className="hover:underline">
+                      {device.name}
+                    </Link>
+                  </TableCell>
                   <TableCell>{getStatusBadge(device.status)}</TableCell>
                   <TableCell>
                     {deviceRole?.name ?? 'N/A'}
@@ -467,7 +475,7 @@ export default function DevicesPage() {
                         <DropdownMenuItem>Edit</DropdownMenuItem>
                         <DropdownMenuItem>View Interfaces</DropdownMenuItem>
                         <DropdownMenuItem
-                            onClick={() => handlePingDevice(device.name)}
+                            onClick={() => handlePingDevice(device.id!)}
                             disabled={isPinging}
                         >
                             {isPinging ? (
@@ -480,7 +488,7 @@ export default function DevicesPage() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
-                          onClick={() => openDeleteDialog(device.name)}
+                          onClick={() => openDeleteDialog(device.id!)}
                         >
                           Delete
                         </DropdownMenuItem>
@@ -500,7 +508,7 @@ export default function DevicesPage() {
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the device
-              "{deviceToDelete}".
+              "{deviceToDelete && devices.find(d => d.id === deviceToDelete)?.name}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

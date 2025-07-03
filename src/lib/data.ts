@@ -139,6 +139,7 @@ export type Device = {
   clusterId?: string | null
   tenantId?: string | null
   tenantGroupId?: string | null
+  configBackup?: string | null
 }
 
 
@@ -399,7 +400,7 @@ export const initialDeviceTypes: DeviceType[] = [
     { id: 'dt-1', manufacturer: 'Juniper', model: 'QFX5120', u_height: 2 },
     { id: 'dt-2', manufacturer: 'Cisco', model: 'ASR1001-X', u_height: 1 },
     { id: 'dt-3', manufacturer: 'Arista', model: '720XP', u_height: 1 },
-    { id: 'dt-4', manufacturer: 'Dell', model: 'PowerEdge R740', u_height: 2 },
+    { id: 'dt-4', name: 'Dell', model: 'PowerEdge R740', u_height: 2 },
     { id: 'dt-5', manufacturer: 'Palo Alto', model: 'PA-3220', u_height: 2 },
 ];
 

@@ -16,8 +16,8 @@ const initialSiteGroups = [
 ];
 
 const initialSites = [
-    { id: 'florim-tn', name: 'Florim TN Data Center', regionId: 'us-east', status: 'active', groupId: 'dc', tags: ['primary'], latitude: 36.5297, longitude: -87.3595, tenantId: 'tenant-a', physicalAddress: '123 Main St, Clarksville, TN', imageUrl: 'https://placehold.co/600x400.png', facility: 'CL-01', asns: '65000', timeZone: 'America/Chicago', description: 'Primary data center facility for North American operations.', comments: 'All shipments must be scheduled 24 hours in advance with DC operations.' },
-    { id: 'dub-office', name: 'Dublin Office', regionId: 'eu', status: 'planned', groupId: 'office', tags: [], latitude: 53.3498, longitude: -6.2603, tenantId: 'tenant-b', physicalAddress: '456 O\'Connell Street, Dublin, Ireland', imageUrl: 'https://placehold.co/600x400.png', facility: 'DUB-01', timeZone: 'Europe/Dublin', description: 'Main European branch office and development hub.' },
+    { id: 'florim-tn', name: 'Florim TN Data Center', regionId: 'us-east', status: 'active', groupId: 'dc', tags: ['primary'], latitude: 36.5297, longitude: -87.3595, tenantId: 'tenant-a', tenantGroupId: 'tg-1', physicalAddress: '123 Main St, Clarksville, TN', imageUrl: 'https://placehold.co/600x400.png', facility: 'CL-01', asns: '65000', timeZone: 'America/Chicago', description: 'Primary data center facility for North American operations.', comments: 'All shipments must be scheduled 24 hours in advance with DC operations.' },
+    { id: 'dub-office', name: 'Dublin Office', regionId: 'eu', status: 'planned', groupId: 'office', tags: [], latitude: 53.3498, longitude: -6.2603, tenantId: 'tenant-b', tenantGroupId: 'tg-2', physicalAddress: '456 O\'Connell Street, Dublin, Ireland', imageUrl: 'https://placehold.co/600x400.png', facility: 'DUB-01', timeZone: 'Europe/Dublin', description: 'Main European branch office and development hub.' },
     { id: 'legacy-dc', name: 'Legacy DC', status: 'decommissioning', tags: [], description: "Legacy DC" }
 ];
 
@@ -93,12 +93,27 @@ const initialVirtualChassis = [
 ];
 
 const initialDevices = [
-    { id: 'dev-1', name: "core-sw-01", deviceTypeId: "dt-1", status: 'active', deviceRoleId: "dr-1", platformId: "p-1", siteId: "florim-tn", ip: "10.1.1.2", tags: ["core", "critical"], virtualChassisId: 'vc-1', vcPosition: 1, vcPriority: 255, rackId: 'rack-1', position: 40, rackFace: 'front', assetTag: 'AST-001', serial: 'SN-CORE01' },
-    { id: 'dev-2', name: "edge-router-01", deviceTypeId: "dt-2", status: 'active', deviceRoleId: "dr-2", platformId: "p-2", siteId: "florim-tn", ip: "192.0.2.1", tags: ["edge", "critical"], assetTag: 'AST-002', serial: 'SN-EDGE01' },
-    { id: 'dev-3', name: "access-sw-lobby", deviceTypeId: "dt-3", status: 'offline', deviceRoleId: "dr-3", platformId: "p-3", siteId: "dub-office", ip: "10.10.20.5", tags: ["access", "users"], assetTag: 'AST-003', serial: 'SN-ACCESS01' },
-    { id: 'dev-4', name: "server-vmhost-01", deviceTypeId: "dt-4", status: 'active', deviceRoleId: "dr-4", platformId: "p-4", siteId: "florim-tn", ip: "10.2.5.10", tags: ["compute", "vmware"], clusterId: 'cluster-1', assetTag: 'AST-004', serial: 'SN-VMHOST01' },
-    { id: 'dev-5', name: "firewall-corp", deviceTypeId: "dt-5", status: 'provisioning', deviceRoleId: "dr-5", platformId: "p-5", siteId: "florim-tn", ip: "10.1.1.1", tags: ["security"], assetTag: 'AST-005', serial: 'SN-FW01' },
-    { id: 'dev-6', name: "core-sw-02", deviceTypeId: "dt-1", status: 'active', deviceRoleId: "dr-1", platformId: "p-1", siteId: "florim-tn", ip: "10.1.1.3", tags: ["core", "critical"], virtualChassisId: 'vc-1', vcPosition: 2, vcPriority: 254, rackId: 'rack-1', position: 38, rackFace: 'front', assetTag: 'AST-006', serial: 'SN-CORE02' },
+    { id: 'dev-1', name: "core-sw-01", deviceTypeId: "dt-1", status: 'active', deviceRoleId: "dr-1", platformId: "p-1", siteId: "florim-tn", ip: "10.1.1.2", tags: ["core", "critical"], virtualChassisId: 'vc-1', vcPosition: 1, vcPriority: 255, rackId: 'rack-1', position: 40, rackFace: 'front', assetTag: 'AST-001', serial: 'SN-CORE01', configBackup: `!
+version 15.1X53-D59.4
+system {
+    host-name core-sw-01;
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family ethernet-switching {
+                vlan {
+                    members 100;
+                }
+            }
+        }
+    }
+}` },
+    { id: 'dev-2', name: "edge-router-01", deviceTypeId: "dt-2", status: 'active', deviceRoleId: "dr-2", platformId: "p-2", siteId: "florim-tn", ip: "192.0.2.1", tags: ["edge", "critical"], assetTag: 'AST-002', serial: 'SN-EDGE01', configBackup: null },
+    { id: 'dev-3', name: "access-sw-lobby", deviceTypeId: "dt-3", status: 'offline', deviceRoleId: "dr-3", platformId: "p-3", siteId: "dub-office", ip: "10.10.20.5", tags: ["access", "users"], assetTag: 'AST-003', serial: 'SN-ACCESS01', configBackup: null },
+    { id: 'dev-4', name: "server-vmhost-01", deviceTypeId: "dt-4", status: 'active', deviceRoleId: "dr-4", platformId: "p-4", siteId: "florim-tn", ip: "10.2.5.10", tags: ["compute", "vmware"], clusterId: 'cluster-1', assetTag: 'AST-004', serial: 'SN-VMHOST01', configBackup: null },
+    { id: 'dev-5', name: "firewall-corp", deviceTypeId: "dt-5", status: 'provisioning', deviceRoleId: "dr-5", platformId: "p-5", siteId: "florim-tn", ip: "10.1.1.1", tags: ["security"], assetTag: 'AST-005', serial: 'SN-FW01', configBackup: null },
+    { id: 'dev-6', name: "core-sw-02", deviceTypeId: "dt-1", status: 'active', deviceRoleId: "dr-1", platformId: "p-1", siteId: "florim-tn", ip: "10.1.1.3", tags: ["core", "critical"], virtualChassisId: 'vc-1', vcPosition: 2, vcPriority: 254, rackId: 'rack-1', position: 38, rackFace: 'front', assetTag: 'AST-006', serial: 'SN-CORE02', configBackup: null },
 ];
 
 const initialRackRoles = [
@@ -129,11 +144,11 @@ const initialPrefixes = [
 ];
 
 const initialIpAddresses = [
-    { id: 'ip-1', address: "10.1.1.1", status: 'active', assignedObjectType: "device", assignedObjectId: "dev-1", dns_name: "core-sw-01.example.com", description: "Gateway", prefixId: 'prefix-1' },
-    { id: 'ip-2', address: "10.1.1.10", status: 'active', assignedObjectType: "vm", assignedObjectId: "vm-1", dns_name: "web-server-01.example.com", description: "Primary Web Server", prefixId: 'prefix-1' },
-    { id: 'ip-3', address: "10.1.1.11", status: 'dhcp', assignedObjectType: "vm", assignedObjectId: "vm-2", prefixId: 'prefix-1' },
-    { id: 'ip-4', address: "10.1.1.254", status: 'reserved', description: "Broadcast", prefixId: 'prefix-1' },
-    { id: 'ip-5', address: "192.168.10.55", status: 'dhcp', assignedObjectType: "device", assignedObjectId: "dev-3", dns_name: "jdoe-laptop.corp.example.com", prefixId: 'prefix-2' },
+    { id: 'ip-1', address: "10.1.1.1", status: 'active', assignedObjectType: "Device", assignedObjectId: "dev-1", dnsName: "core-sw-01.example.com", description: "Gateway", prefixId: 'prefix-1' },
+    { id: 'ip-2', address: "10.1.1.10", status: 'active', assignedObjectType: "VirtualMachine", assignedObjectId: "vm-1", dnsName: "web-server-01.example.com", description: "Primary Web Server", prefixId: 'prefix-1' },
+    { id: 'ip-3', address: "10.1.1.11", status: 'dhcp', assignedObjectType: "VirtualMachine", assignedObjectId: "vm-2", dnsName: null, description: null, prefixId: 'prefix-1' },
+    { id: 'ip-4', address: "10.1.1.254", status: 'reserved', description: "Broadcast", prefixId: 'prefix-1', assignedObjectType: null, assignedObjectId: null, dnsName: null },
+    { id: 'ip-5', address: "192.168.10.55", status: 'dhcp', assignedObjectType: "Device", assignedObjectId: "dev-3", dnsName: "jdoe-laptop.corp.example.com", description: null, prefixId: 'prefix-2' },
 ];
 
 const initialProviders = [
@@ -205,6 +220,7 @@ async function main() {
   await prisma.powerFeed.deleteMany();
   await prisma.rackReservation.deleteMany();
   await prisma.device.deleteMany();
+  await prisma.iPAddress.deleteMany();
   await prisma.rack.deleteMany();
   await prisma.accessPoint.deleteMany();
   await prisma.circuit.deleteMany();
@@ -227,7 +243,6 @@ async function main() {
   await prisma.virtualChassis.deleteMany();
   await prisma.rackRole.deleteMany();
   await prisma.rackType.deleteMany();
-  await prisma.iPAddress.deleteMany();
   await prisma.prefix.deleteMany();
   await prisma.provider.deleteMany();
   await prisma.circuitType.deleteMany();
@@ -242,7 +257,7 @@ async function main() {
   await prisma.siteGroup.createMany({ data: initialSiteGroups, skipDuplicates: true });
   await prisma.tenantGroup.createMany({ data: initialTenantGroups, skipDuplicates: true });
   await prisma.tenant.createMany({ data: initialTenants.map(t => ({...t, groupId: t.groupId || null })), skipDuplicates: true });
-  await prisma.site.createMany({ data: initialSites.map(s => ({...s, regionId: s.regionId || null, groupId: s.groupId || null, tenantGroupId: s.tenantGroupId || null, tenantId: s.tenantId || null })) as any, skipDuplicates: true });
+  await prisma.site.createMany({ data: initialSites.map(s => ({...s, regionId: s.regionId || null, groupId: s.groupId || null, tenantGroupId: s.tenantGroupId || null, tenantId: s.tenantId || null })), skipDuplicates: true });
   await prisma.location.createMany({ data: initialLocations, skipDuplicates: true });
   
   await prisma.contactGroup.createMany({ data: initialContactGroups, skipDuplicates: true });
@@ -260,11 +275,11 @@ async function main() {
   await prisma.rackReservation.createMany({ data: initialRackReservations, skipDuplicates: true });
 
   await prisma.prefix.createMany({ data: initialPrefixes, skipDuplicates: true });
-  await prisma.iPAddress.createMany({ data: initialIpAddresses.map(ip => ({...ip, assignedObjectId: ip.assigned_object_id || null, assignedObjectType: ip.assigned_object_type || null, dnsName: ip.dns_name || null, description: ip.description || null })), skipDuplicates: true });
+  await prisma.iPAddress.createMany({ data: initialIpAddresses.map(ip => ({...ip, assignedObjectId: ip.assignedObjectId || null, assignedObjectType: ip.assignedObjectType || null, dnsName: ip.dnsName || null, description: ip.description || null })), skipDuplicates: true });
   
   await prisma.provider.createMany({ data: initialProviders, skipDuplicates: true });
   await prisma.circuitType.createMany({ data: initialCircuitTypes, skipDuplicates: true });
-  await prisma.circuit.createMany({ data: initialCircuits, skipDuplicates: true });
+  await prisma.circuit.createMany({ data: initialCircuits.map(c => ({...c, installDate: new Date(c.installDate)})), skipDuplicates: true });
 
   await prisma.wirelessLan.createMany({ data: initialWirelessLans, skipDuplicates: true });
   await prisma.accessPoint.createMany({ data: initialAccessPoints, skipDuplicates: true });
@@ -278,7 +293,7 @@ async function main() {
   await prisma.cluster.createMany({ data: initialClusters.map(c => ({...c, siteId: c.siteId || null})), skipDuplicates: true });
   await prisma.virtualMachine.createMany({ data: initialVirtualMachines.map(vm => ({...vm, primaryIp: vm.primaryIp || null})) , skipDuplicates: true });
 
-  await prisma.device.createMany({ data: initialDevices.map(d => ({...d, rackId: d.rackId || null, platformId: d.platformId || null, clusterId: d.clusterId || null, virtualChassisId: d.virtualChassisId || null, position: d.position || null, rackFace: d.rackFace || null, tenantId: d.tenantId || null, tenantGroupId: d.tenantGroupId || null, assetTag: d.assetTag || null, serial: d.serial || null})) as any, skipDuplicates: true });
+  await prisma.device.createMany({ data: initialDevices.map(d => ({...d, configBackup: d.configBackup, rackId: d.rackId || null, platformId: d.platformId || null, clusterId: d.clusterId || null, virtualChassisId: d.virtualChassisId || null, position: d.position || null, rackFace: d.rackFace || null, tenantId: d.tenantId || null, tenantGroupId: d.tenantGroupId || null, assetTag: d.assetTag || null, serial: d.serial || null})), skipDuplicates: true });
 
 
   console.log(`Seeding finished.`)
@@ -293,3 +308,4 @@ main()
     await prisma.$disconnect()
     process.exit(1)
   })
+

@@ -1,155 +1,146 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// --- ORGANIZATION ---
+generator client {
+  provider = "prisma-client-js"
+}
 
 model Region {
-  id          String   @id
-  name        String
-  description String?
-  parentId    String?
-  tags        String[]
-  parent      Region?  @relation("RegionHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children    Region[] @relation("RegionHierarchy")
-  sites       Site[]
+  id                String              @id
+  name              String
+  description       String?
+  tags              String[]
+  parentId          String?
+  parent            Region?             @relation("RegionHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children          Region[]            @relation("RegionHierarchy")
+  Site              Site[]
+  ContactAssignment ContactAssignment[]
 }
 
 model SiteGroup {
-  id          String  @id
-  name        String  @unique
+  id          String @id
+  name        String
   description String?
-  sites       Site[]
+  Site        Site[]
 }
 
 model Site {
-  id              String         @id
-  name            String         @unique
-  status          SiteStatus
-  regionId        String?
-  groupId         String?
-  facility        String?
-  asns            String?
-  timeZone        String?
-  description     String?
-  tags            String[]
-  tenantGroupId   String?
-  tenantId        String?
-  physicalAddress String?
-  shippingAddress String?
-  latitude        Float?
-  longitude       Float?
-  comments        String?
-  imageUrl        String?
-  region          Region?        @relation(fields: [regionId], references: [id])
-  group           SiteGroup?     @relation(fields: [groupId], references: [id])
-  tenantGroup     TenantGroup?   @relation(fields: [tenantGroupId], references: [id])
-  tenant          Tenant?        @relation(fields: [tenantId], references: [id])
-  locations       Location[]
-  racks           Rack[]
-  powerPanels     PowerPanel[]
-  clusters        Cluster[]
-  accessPoints    AccessPoint[]
-  circuitsA       Circuit[]      @relation("TermA")
-  circuitsZ       Circuit[]      @relation("TermZ")
-}
-
-enum SiteStatus {
-  active
-  offline
-  planned
-  decommissioning
+  id                String              @id
+  name              String
+  regionId          String?
+  region            Region?             @relation(fields: [regionId], references: [id])
+  status            String
+  groupId           String?
+  group             SiteGroup?          @relation(fields: [groupId], references: [id])
+  tags              String[]
+  latitude          Float?
+  longitude         Float?
+  tenantId          String?
+  tenant            Tenant?             @relation(fields: [tenantId], references: [id])
+  tenantGroupId     String?
+  tenantGroup       TenantGroup?        @relation(fields: [tenantGroupId], references: [id])
+  physicalAddress   String?
+  imageUrl          String?
+  facility          String?
+  asns              String?
+  timeZone          String?
+  description       String?
+  comments          String?
+  Location          Location[]
+  Device            Device[]
+  PowerPanel        PowerPanel[]
+  Cluster           Cluster[]
+  AccessPoint       AccessPoint[]
+  termA_circuits    Circuit[]           @relation("TermA")
+  termZ_circuits    Circuit[]           @relation("TermZ")
+  ContactAssignment ContactAssignment[]
 }
 
 model Location {
-  id          String      @id
-  name        String
-  siteId      String
-  description String?
-  site        Site        @relation(fields: [siteId], references: [id])
-  racks       Rack[]
-  powerPanels PowerPanel[]
-  assignments ContactAssignment[]
+  id                String              @id
+  name              String
+  siteId            String
+  site              Site                @relation(fields: [siteId], references: [id])
+  description       String?
+  Rack              Rack[]
+  PowerPanel        PowerPanel[]
+  ContactAssignment ContactAssignment[]
 }
 
 model TenantGroup {
   id          String   @id
-  name        String   @unique
+  name        String
   description String?
-  tenants     Tenant[]
-  sites       Site[]
-  racks       Rack[]
+  Tenant      Tenant[]
+  Device      Device[]
+  Rack        Rack[]
 }
 
 model Tenant {
   id              String            @id
-  name            String            @unique
-  description     String?
+  name            String
   groupId         String?
   group           TenantGroup?      @relation(fields: [groupId], references: [id])
-  sites           Site[]
-  racks           Rack[]
-  rackReservations RackReservation[]
+  description     String?
+  Site            Site[]
+  RackReservation RackReservation[]
+  Device          Device[]
+  Rack            Rack[]
 }
 
 model ContactGroup {
-  id          String    @id
-  name        String    @unique
+  id      String    @id
+  name    String
   description String?
-  contacts    Contact[]
+  Contact Contact[]
 }
 
 model Contact {
-  id          String              @id
-  name        String
-  email       String              @unique
-  phone       String?
-  title       String?
-  groupId     String?
-  group       ContactGroup?       @relation(fields: [groupId], references: [id])
-  assignments ContactAssignment[]
+  id                String              @id
+  name              String
+  email             String
+  phone             String
+  title             String
+  groupId           String?
+  group             ContactGroup?       @relation(fields: [groupId], references: [id])
+  ContactAssignment ContactAssignment[]
 }
 
 model ContactRole {
-  id          String              @id
-  name        String              @unique
-  description String?
-  assignments ContactAssignment[]
+  id                String              @id
+  name              String
+  description       String?
+  ContactAssignment ContactAssignment[]
 }
 
 model ContactAssignment {
   id         String      @id
-  objectType String // 'region', 'site', 'location' etc.
+  objectType String
   objectId   String
   contactId  String
-  roleId     String
   contact    Contact     @relation(fields: [contactId], references: [id])
+  roleId     String
   role       ContactRole @relation(fields: [roleId], references: [id])
-  location   Location?   @relation(fields: [objectId], references: [id])
+  Region     Region?     @relation(fields: [objectId], references: [id])
+  Site       Site?       @relation(fields: [objectId], references: [id])
+  Location   Location?   @relation(fields: [objectId], references: [id])
 }
 
 model Tag {
-  id          String   @id
-  name        String   @unique
+  id          String  @id
+  name        String  @unique
   description String?
 }
 
-// --- DEVICES ---
-
 model DeviceRole {
   id          String   @id
-  name        String   @unique
+  name        String
   description String?
   color       String
-  devices     Device[]
+  Device      Device[]
 }
 
 model Platform {
@@ -157,7 +148,7 @@ model Platform {
   name         String
   manufacturer String
   description  String?
-  devices      Device[]
+  Device       Device[]
 }
 
 model DeviceType {
@@ -165,83 +156,57 @@ model DeviceType {
   manufacturer String
   model        String
   u_height     Int
-  description  String?
-  devices      Device[]
-
-  @@unique([manufacturer, model])
+  Device       Device[]
 }
 
 model VirtualChassis {
   id       String   @id
   name     String   @unique
-  domain   String?
-  masterId String // Device id
-  devices  Device[]
+  domain   String
+  masterId String
+  Device   Device[]
 }
 
 model Device {
-  id               String         @id
-  name             String         @unique
+  id               String          @id
+  name             String          @unique
   deviceTypeId     String
-  status           DeviceStatus
+  deviceType       DeviceType      @relation(fields: [deviceTypeId], references: [id])
+  status           String
   deviceRoleId     String
+  deviceRole       DeviceRole      @relation(fields: [deviceRoleId], references: [id])
   platformId       String?
-  siteId           String // In real world this might be derived from rack->location->site, but simple for now
+  platform         Platform?       @relation(fields: [platformId], references: [id])
+  siteId           String
+  site             Site            @relation(fields: [siteId], references: [id])
   ip               String?
   tags             String[]
-  clusterId        String?
-  tenantGroupId    String?
-  tenantId         String?
-  description      String?
-  airflow          Airflow?
-  serial           String?        @unique
-  assetTag         String?        @unique
-  locationId       String?
-  rackId           String?
-  rackFace         RackFace?
-  position         Int?
-  latitude         Float?
-  longitude        Float?
-  configTemplate   String?
   virtualChassisId String?
+  virtualChassis   VirtualChassis? @relation(fields: [virtualChassisId], references: [id])
   vcPosition       Int?
   vcPriority       Int?
-  deviceType       DeviceType     @relation(fields: [deviceTypeId], references: [id])
-  deviceRole       DeviceRole     @relation(fields: [deviceRoleId], references: [id])
-  platform         Platform?      @relation(fields: [platformId], references: [id])
-  cluster          Cluster?       @relation(fields: [clusterId], references: [id])
-  rack             Rack?          @relation(fields: [rackId], references: [id])
-  virtualChassis   VirtualChassis? @relation(fields: [virtualChassisId], references: [id])
+  rackId           String?
+  rack             Rack?           @relation(fields: [rackId], references: [id])
+  position         Int?
+  rackFace         String?
+  assetTag         String?
+  serial           String?
+  clusterId        String?
+  cluster          Cluster?        @relation(fields: [clusterId], references: [id])
+  tenantId         String?
+  tenant           Tenant?         @relation(fields: [tenantId], references: [id])
+  tenantGroupId    String?
+  tenantGroup      TenantGroup?    @relation(fields: [tenantGroupId], references: [id])
+  configBackup     String?         @db.Text
+  IPAddress        IPAddress[]
 }
-
-enum DeviceStatus {
-  active
-  offline
-  provisioning
-  staged
-  decommissioning
-}
-
-enum Airflow {
-  front_to_rear
-  rear_to_front
-  side_to_rear
-  passive
-}
-
-enum RackFace {
-  front
-  rear
-}
-
-// --- RACKS ---
 
 model RackRole {
   id          String  @id
-  name        String  @unique
+  name        String
   description String?
   color       String
-  racks       Rack[]
+  Rack        Rack[]
 }
 
 model RackType {
@@ -249,319 +214,195 @@ model RackType {
   manufacturer String
   model        String
   u_height     Int
-  width        RackWidth
-  racks        Rack[]
-
-  @@unique([manufacturer, model])
+  width        String
+  Rack         Rack[]
 }
 
 model Rack {
-  id               String            @id
-  name             String
-  siteId           String
-  locationId       String?
-  status           RackStatus
-  roleId           String?
-  typeId           String?
-  description      String?
-  airflow          Airflow?
-  tags             String[]
-  facilityId       String?
-  serial           String?           @unique
-  assetTag         String?           @unique
-  tenantGroupId    String?
-  tenantId         String?
-  width            RackWidth
-  u_height         Int
-  startingUnit     Int?
-  outerWidth       Float?
-  outerHeight      Float?
-  outerDepth       Float?
-  outerUnit        UnitOfMeasure?
-  weight           Float?
-  maxWeight        Float?
-  weightUnit       WeightUnit?
-  mountingDepth    Float?
-  comments         String?
-  site             Site              @relation(fields: [siteId], references: [id])
-  location         Location?         @relation(fields: [locationId], references: [id])
-  role             RackRole?         @relation(fields: [roleId], references: [id])
-  type             RackType?         @relation(fields: [typeId], references: [id])
-  tenantGroup      TenantGroup?      @relation(fields: [tenantGroupId], references: [id])
-  tenant           Tenant?           @relation(fields: [tenantId], references: [id])
-  devices          Device[]
-  reservations     RackReservation[]
-  powerFeeds       PowerFeed[]
+  id              String            @id
+  name            String
+  siteId          String
+  site            Site              @relation(fields: [siteId], references: [id])
+  locationId      String?
+  location        Location?         @relation(fields: [locationId], references: [id])
+  roleId          String?
+  role            RackRole?         @relation(fields: [roleId], references: [id])
+  typeId          String?
+  type            RackType?         @relation(fields: [typeId], references: [id])
+  status          String
+  u_height        Int
+  width           String
+  tags            String[]
+  facilityId      String?
+  tenantId        String?
+  tenant          Tenant?           @relation(fields: [tenantId], references: [id])
+  comments        String?
+  serial          String?
+  assetTag        String?
+  startingUnit    Int?              @default(1)
+  tenantGroupId   String?
+  tenantGroup     TenantGroup?      @relation(fields: [tenantGroupId], references: [id])
+  Device          Device[]
+  RackReservation RackReservation[]
+  PowerFeed       PowerFeed[]
 }
 
 model RackReservation {
-  id          String  @id
+  id          String @id
   rackId      String
+  rack        Rack   @relation(fields: [rackId], references: [id])
   units       Int[]
   tenantId    String
+  tenant      Tenant @relation(fields: [tenantId], references: [id])
   description String
-  rack        Rack    @relation(fields: [rackId], references: [id])
-  tenant      Tenant  @relation(fields: [tenantId], references: [id])
 }
-
-enum RackStatus {
-  active
-  planned
-  decommissioned
-}
-
-enum RackWidth {
-  nineteen_in @map("19in")
-  twentythree_in @map("23in")
-}
-
-enum UnitOfMeasure {
-  mm
-  in
-}
-
-enum WeightUnit {
-  kg
-  lb
-}
-
-// --- IPAM ---
 
 model Prefix {
-  id          String        @id
-  prefix      String        @unique
-  status      PrefixStatus
-  site        String // For simplicity, not a relation for now
+  id          String      @id
+  prefix      String      @unique
+  status      String
+  site        String
   description String?
   tags        String[]
   ips         IPAddress[]
 }
 
 model IPAddress {
-  id                 String              @id
-  address            String              @unique
-  status             IpStatus
-  assignedObjectType AssignedObjectType?
+  id                 String  @id
+  address            String  @unique
+  status             String
+  assignedObjectType String?
   assignedObjectId   String?
   dnsName            String?
   description        String?
-  prefixId           String
-  prefix             Prefix              @relation(fields: [prefixId], references: [id])
+  prefixId           String?
+  prefix             Prefix? @relation(fields: [prefixId], references: [id])
+  Device             Device? @relation(fields: [assignedObjectId], references: [id])
 }
-
-enum PrefixStatus {
-  active
-  reserved
-  deprecated
-}
-
-enum IpStatus {
-  active
-  reserved
-  dhcp
-  deprecated
-}
-
-enum AssignedObjectType {
-  device
-  vm
-  interface
-}
-
-
-// --- CIRCUITS ---
 
 model Provider {
-  id       String    @id
-  name     String    @unique
-  asn      Int?
-  account  String?
-  circuits Circuit[]
+  id      String    @id
+  name    String
+  asn     Int
+  account String
+  Circuit Circuit[]
 }
 
 model CircuitType {
   id          String    @id
-  name        String    @unique
+  name        String
   description String?
-  circuits    Circuit[]
+  Circuit     Circuit[]
 }
 
 model Circuit {
-  id           String        @id
-  cid          String        @unique
+  id           String      @id
+  cid          String      @unique
   providerId   String
+  provider     Provider    @relation(fields: [providerId], references: [id])
   typeId       String
-  status       CircuitStatus
-  installDate  DateTime?
-  commitRate   Int?
+  type         CircuitType @relation(fields: [typeId], references: [id])
+  status       String
+  installDate  DateTime
+  commitRate   Int
   description  String?
   termA_siteId String
+  termA_site   Site        @relation("TermA", fields: [termA_siteId], references: [id])
   termZ_siteId String
-  provider     Provider      @relation(fields: [providerId], references: [id])
-  type         CircuitType   @relation(fields: [typeId], references: [id])
-  termA        Site          @relation("TermA", fields: [termA_siteId], references: [id])
-  termZ        Site          @relation("TermZ", fields: [termZ_siteId], references: [id])
+  termZ_site   Site        @relation("TermZ", fields: [termZ_siteId], references: [id])
 }
-
-enum CircuitStatus {
-  active
-  provisioning
-  offline
-  decommissioned
-}
-
-// --- WIRELESS ---
 
 model WirelessLan {
-  id          String   @id
-  ssid        String   @unique
+  id          String  @id
+  ssid        String  @unique
   vlan        String?
   description String?
-  authType    AuthType
-}
-
-enum AuthType {
-  Open
-  WEP
-  WPA_Personal @map("WPA Personal")
-  WPA_Enterprise @map("WPA Enterprise")
+  authType    String
 }
 
 model AccessPoint {
-  id        String         @id
-  name      String         @unique
+  id        String @id
+  name      String @unique
   siteId    String
-  status    AccessPointStatus
-  model     String?
-  ipAddress String?
-  site      Site           @relation(fields: [siteId], references: [id])
+  site      Site   @relation(fields: [siteId], references: [id])
+  status    String
+  model     String
+  ipAddress String
 }
-
-enum AccessPointStatus {
-  active
-  offline
-  planned
-}
-
-// --- VPN ---
 
 model VpnTunnel {
-  id          String        @id
-  name        String        @unique
-  status      VpnStatus
-  type        VpnType
+  id          String  @id
+  name        String  @unique
+  status      String
+  type        String
   localPeer   String
   remotePeer  String
   description String?
 }
 
-enum VpnStatus {
-  active
-  disabled
-  planned
-}
-
-enum VpnType {
-  IPsec
-  OpenVPN
-  WireGuard
-}
-
-// --- POWER ---
-
 model PowerPanel {
-  id           String      @id
+  id           String     @id
   name         String
   siteId       String
+  site         Site       @relation(fields: [siteId], references: [id])
   locationId   String?
+  location     Location?  @relation(fields: [locationId], references: [id])
   voltage      Int
-  phase        Phase
+  phase        String
   capacityAmps Int
-  site         Site        @relation(fields: [siteId], references: [id])
-  location     Location?   @relation(fields: [locationId], references: [id])
-  powerFeeds   PowerFeed[]
-}
-
-enum Phase {
-  single_phase
-  three_phase
+  PowerFeed    PowerFeed[]
 }
 
 model PowerFeed {
-  id       String        @id
-  name     String        @unique
+  id       String     @id
+  name     String
   panelId  String
+  panel    PowerPanel @relation(fields: [panelId], references: [id])
   rackId   String?
-  status   PowerFeedStatus
-  type     PowerFeedType
+  rack     Rack?      @relation(fields: [rackId], references: [id])
+  status   String
+  type     String
   amperage Int
   voltage  Int
-  panel    PowerPanel    @relation(fields: [panelId], references: [id])
-  rack     Rack?         @relation(fields: [rackId], references: [id])
 }
-
-enum PowerFeedStatus {
-  active
-  offline
-  planned
-}
-
-enum PowerFeedType {
-  primary
-  redundant
-}
-
-// --- VIRTUALIZATION ---
 
 model ClusterType {
   id          String    @id
-  name        String    @unique
+  name        String
   description String?
-  clusters    Cluster[]
+  Cluster     Cluster[]
 }
 
 model ClusterGroup {
   id          String    @id
-  name        String    @unique
+  name        String
   description String?
-  clusters    Cluster[]
+  Cluster     Cluster[]
 }
 
 model Cluster {
-  id       String         @id
-  name     String         @unique
-  typeId   String
-  groupId  String
-  siteId   String?
-  comments String?
-  type     ClusterType    @relation(fields: [typeId], references: [id])
-  group    ClusterGroup   @relation(fields: [groupId], references: [id])
-  site     Site?          @relation(fields: [siteId], references: [id])
-  vms      VirtualMachine[]
-  devices  Device[]
+  id             String           @id
+  name           String
+  typeId         String
+  type           ClusterType      @relation(fields: [typeId], references: [id])
+  groupId        String
+  group          ClusterGroup     @relation(fields: [groupId], references: [id])
+  siteId         String?
+  site           Site?            @relation(fields: [siteId], references: [id])
+  comments       String?
+  Device         Device[]
+  VirtualMachine VirtualMachine[]
 }
 
 model VirtualMachine {
-  id        String   @id
-  name      String   @unique
-  status    VmStatus
+  id        String  @id
+  name      String  @unique
+  status    String
   clusterId String
+  cluster   Cluster @relation(fields: [clusterId], references: [id])
   role      String?
-  vcpus     Int?
-  memory    Int?
-  disk      Int?
+  vcpus     Int
+  memory    Int
+  disk      Int
   primaryIp String?
-  cluster   Cluster  @relation(fields: [clusterId], references: [id])
-}
-
-enum VmStatus {
-  active
-  offline
-  building
-}
-
-// Modules are not fully implemented in the UI, so a simple model is fine
-model Module {
-  id   String @id
-  name String @unique
 }
