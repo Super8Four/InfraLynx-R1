@@ -29,6 +29,48 @@ Before you begin, ensure you have the following installed:
 
 ### Installation
 
+## Available Functionalities
+
+Based on the project's file structure under `src/app/(dashboard)`, the UI provides access to the following key areas and their related functionalities:
+
+-   **Admin:**
+-   **Branching:**
+-   **Cabling:**
+-   **Circuits:**
+-   **Devices:**
+    -   Actions
+    -   Modules
+    -   Platforms
+    -   Roles
+    -   Types
+    -   Virtual Chassis
+-   **IPAM:**
+-   **Operations:**
+-   **Organization:**
+    -   Contact Assignments
+    -   Contact Groups
+    -   Contact Roles
+    -   Contacts
+    -   Locations
+    -   Regions
+    -   Site Groups
+    -   Sites
+    -   Tags
+    -   Tenant Groups
+    -   Tenants
+-   **Power:**
+-   **Provisioning:**
+-   **Racks:**
+    -   Elevations
+    -   Reservations
+    -   Roles
+    -   Types
+-   **Topology:**
+-   **Virtualization:**
+-   **VPN:**
+-   **Wireless:**
+
+
 #### Option 1: Using Docker Compose (Recommended)
 
 This method uses Docker Compose to set up and run the application and its dependencies. It is the easiest way to get started as it handles setting up the database and other dependencies.
