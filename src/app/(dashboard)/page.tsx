@@ -195,14 +195,14 @@ export default function DashboardPage() {
         const stackedLayout = (cols: number) => {
             if (isBranchingEnabled) {
                 return [
-                    { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false },
+                    { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false, isDraggable: false },
                     { i: "branching", x: 0, y: 1, w: cols, h: 4 },
                     { i: "ip-usage", x: 0, y: 5, w: cols, h: 4 },
                     { i: "activity", x: 0, y: 9, w: cols, h: 4 },
                 ];
             }
             return [
-                { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false },
+                { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false, isDraggable: false },
                 { i: "ip-usage", x: 0, y: 1, w: cols, h: 4 },
                 { i: "activity", x: 0, y: 5, w: cols, h: 4 },
             ];
@@ -211,14 +211,14 @@ export default function DashboardPage() {
         const sideBySideLayout = (cols: number, split: number) => {
              if (isBranchingEnabled) {
                 return [
-                    { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false },
+                    { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false, isDraggable: false },
                     { i: "branching", x: 0, y: 1, w: split, h: 4 },
                     { i: "ip-usage", x: split, y: 1, w: cols - split, h: 4 },
                     { i: "activity", x: 0, y: 5, w: cols, h: 4 },
                 ];
              }
              return [
-                 { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false },
+                 { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false, isDraggable: false },
                  { i: "ip-usage", x: 0, y: 1, w: Math.floor(cols / 2), h: 4 },
                  { i: "activity", x: Math.floor(cols / 2), y: 1, w: Math.ceil(cols / 2), h: 4 },
              ];
@@ -247,7 +247,6 @@ export default function DashboardPage() {
       <div key="stats">
         <Card className="h-full flex flex-col">
           <CardHeader className="relative pb-2">
-            <div className="drag-handle cursor-move absolute top-2 right-2 p-1 text-muted-foreground"><Move className="h-4 w-4" /></div>
             <CardTitle className="text-base">Overview</CardTitle>
           </CardHeader>
           <CardContent className="flex-1">
