@@ -61,9 +61,6 @@ import { createContactAssignment, deleteContactAssignment } from "../actions"
 type EnrichedContactAssignment = ContactAssignment & {
   contact: Contact;
   role: ContactRole;
-  region: Region | null;
-  site: Site | null;
-  location: Location | null;
 }
 
 interface ContactAssignmentsPageProps {
@@ -136,12 +133,22 @@ export function ContactAssignmentsClientPage({
   }
   
   const getObjectName = (assignment: EnrichedContactAssignment) => {
+    // With polymorphic relations being tricky, we find the name from the passed props.
+    // This is not super efficient for large datasets but works for the demo.
+    let name = assignment.objectId;
     switch (assignment.objectType) {
-      case 'Region': return assignment.region?.name;
-      case 'Site': return assignment.site?.name;
-      case 'Location': return assignment.location?.name;
-      default: return 'Unknown';
+      case 'Region': 
+        name = regions.find(r => r.id === assignment.objectId)?.name || name;
+        break;
+      case 'Site':
+        name = sites.find(s => s.id === assignment.objectId)?.name || name;
+        break;
+      case 'Location': 
+        name = locations.find(l => l.id === assignment.objectId)?.name || name;
+        break;
+      default: break;
     }
+    return name;
   }
 
   return (

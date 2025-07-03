@@ -6,9 +6,6 @@ export default async function ContactAssignmentsPage() {
         include: {
             contact: true,
             role: true,
-            region: true,
-            site: true,
-            location: true,
         },
         orderBy: { objectType: 'asc' }
     });
