@@ -1,4 +1,5 @@
 
+
 // This file contains all the mock data for the application.
 // In a real-world scenario, this data would come from a database.
 
@@ -231,84 +232,131 @@ export type Module = {
 };
 export const initialModules: Module[] = [];
 
-
-// UPDATED: Device type
 export type Device = {
     name: string;
-    deviceTypeId: string; // FK to DeviceType
-    status: "Online" | "Offline" | "Provisioning";
-    deviceRoleId: string; // FK to DeviceRole
-    platformId?: string; // FK to Platform
-    siteId: string; // FK to Site
-    ip: string;
+    deviceTypeId: string; 
+    status: "active" | "offline" | "provisioning" | "staged" | "decommissioning";
+    deviceRoleId: string; 
+    platformId?: string; 
+    siteId: string; 
+    ip?: string;
     tags: string[];
-    virtualChassisId?: string; // FK to VirtualChassis
+
+    // Virtualization
+    clusterId?: string;
+
+    // Tenancy
+    tenantGroupId?: string;
+    tenantId?: string;
+
+    // Hardware
+    description?: string;
+    airflow?: 'front-to-rear' | 'rear-to-front' | 'side-to-rear' | 'passive';
+    serial?: string;
+    assetTag?: string;
+
+    // Location
+    locationId?: string;
+    rackId?: string;
+    rackFace?: 'front' | 'rear';
+    position?: number;
+    latitude?: number;
+    longitude?: number;
+
+    // Management
+    configTemplate?: string;
+
+    // Virtual Chassis
+    virtualChassisId?: string; 
+    vcPosition?: number;
+    vcPriority?: number;
 };
   
-// UPDATED: initialDevices data
 export const initialDevices: Device[] = [
     {
         name: "core-sw-01",
         deviceTypeId: "dt-1",
-        status: "Online",
+        status: "active",
         deviceRoleId: "dr-1",
         platformId: "p-1",
         siteId: "florim-tn",
         ip: "10.1.1.2",
         tags: ["core", "critical"],
         virtualChassisId: 'vc-1',
+        vcPosition: 1,
+        vcPriority: 255,
+        rackId: 'rack-1',
+        position: 40,
+        rackFace: 'front',
+        assetTag: 'AST-001',
+        serial: 'SN-CORE01',
     },
     {
         name: "edge-router-01",
         deviceTypeId: "dt-2",
-        status: "Online",
+        status: "active",
         deviceRoleId: "dr-2",
         platformId: "p-2",
         siteId: "florim-tn",
         ip: "192.0.2.1",
         tags: ["edge", "critical"],
+        assetTag: 'AST-002',
+        serial: 'SN-EDGE01',
     },
     {
         name: "access-sw-lobby",
         deviceTypeId: "dt-3",
-        status: "Offline",
+        status: "offline",
         deviceRoleId: "dr-3",
         platformId: "p-3",
         siteId: "dub-office",
         ip: "10.10.20.5",
         tags: ["access", "users"],
+        assetTag: 'AST-003',
+        serial: 'SN-ACCESS01',
     },
     {
         name: "server-vmhost-01",
         deviceTypeId: "dt-4",
-        status: "Online",
+        status: "active",
         deviceRoleId: "dr-4",
         platformId: "p-4",
         siteId: "florim-tn",
         ip: "10.2.5.10",
         tags: ["compute", "vmware"],
+        clusterId: 'cluster-1',
+        assetTag: 'AST-004',
+        serial: 'SN-VMHOST01',
     },
     {
         name: "firewall-corp",
         deviceTypeId: "dt-5",
-        status: "Provisioning",
+        status: "provisioning",
         deviceRoleId: "dr-5",
         platformId: "p-5",
         siteId: "florim-tn",
         ip: "10.1.1.1",
         tags: ["security"],
+        assetTag: 'AST-005',
+        serial: 'SN-FW01',
     },
-    // Add a second member for the virtual chassis example
     {
         name: "core-sw-02",
         deviceTypeId: "dt-1",
-        status: "Online",
+        status: "active",
         deviceRoleId: "dr-1",
         platformId: "p-1",
         siteId: "florim-tn",
         ip: "10.1.1.3",
         tags: ["core", "critical"],
         virtualChassisId: 'vc-1',
+        vcPosition: 2,
+        vcPriority: 254,
+        rackId: 'rack-1',
+        position: 38,
+        rackFace: 'front',
+        assetTag: 'AST-006',
+        serial: 'SN-CORE02',
     },
 ];
 

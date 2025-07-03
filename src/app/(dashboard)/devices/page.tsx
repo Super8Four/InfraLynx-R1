@@ -75,6 +75,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useToast } from "@/hooks/use-toast"
 import { 
     initialDevices, 
@@ -82,18 +85,53 @@ import {
     initialDeviceRoles,
     initialDeviceTypes,
     initialPlatforms,
+    initialLocations,
+    initialRacks,
+    initialClusters,
+    initialTenants,
+    initialTenantGroups,
+    initialVirtualChassis,
     type Device 
 } from "@/lib/data"
 
 const deviceSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  deviceTypeId: z.string().min(1, "Device Type is required"),
   deviceRoleId: z.string().min(1, "Role is required"),
-  platformId: z.string().optional(),
-  status: z.enum(["Online", "Offline", "Provisioning"]),
-  siteId: z.string().min(1, "Site is required"),
-  ip: z.string().ip({ message: "Invalid IP address" }),
+  description: z.string().optional(),
   tags: z.string().optional(),
+
+  // Hardware
+  deviceTypeId: z.string().min(1, "Device Type is required"),
+  airflow: z.enum(["front-to-rear", "rear-to-front", "side-to-rear", "passive"]).optional(),
+  serial: z.string().optional(),
+  assetTag: z.string().optional(),
+
+  // Location
+  siteId: z.string().min(1, "Site is required"),
+  locationId: z.string().optional(),
+  rackId: z.string().optional(),
+  rackFace: z.enum(["front", "rear"]).optional(),
+  position: z.coerce.number().optional(),
+  latitude: z.coerce.number().optional(),
+  longitude: z.coerce.number().optional(),
+
+  // Management
+  status: z.enum(["active", "offline", "provisioning", "staged", "decommissioning"]),
+  platformId: z.string().optional(),
+  configTemplate: z.string().optional(),
+  ip: z.string().ip({ message: "Invalid IP address" }).optional(),
+
+  // Virtualization
+  clusterId: z.string().optional(),
+
+  // Tenancy
+  tenantGroupId: z.string().optional(),
+  tenantId: z.string().optional(),
+  
+  // Virtual Chassis
+  virtualChassisId: z.string().optional(),
+  vcPosition: z.coerce.number().optional(),
+  vcPriority: z.coerce.number().optional(),
 })
 
 type DeviceFormValues = z.infer<typeof deviceSchema>
@@ -105,6 +143,12 @@ export default function DevicesPage() {
   const [deviceTypes] = useState(initialDeviceTypes)
   const [deviceRoles] = useState(initialDeviceRoles)
   const [platforms] = useState(initialPlatforms)
+  const [locations] = useState(initialLocations)
+  const [racks] = useState(initialRacks)
+  const [clusters] = useState(initialClusters)
+  const [tenants] = useState(initialTenants)
+  const [tenantGroups] = useState(initialTenantGroups)
+  const [virtualChassis] = useState(initialVirtualChassis)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -113,16 +157,21 @@ export default function DevicesPage() {
   const form = useForm<DeviceFormValues>({
     resolver: zodResolver(deviceSchema),
     defaultValues: {
-      name: "",
-      status: "Provisioning",
-      siteId: "",
-      ip: "",
-      tags: "",
+      status: "active",
     },
   })
 
+  const watchedSiteId = form.watch("siteId")
+  const watchedLocationId = form.watch("locationId")
+  const watchedTenantGroupId = form.watch("tenantGroupId")
+
+  const filteredLocations = locations.filter(l => l.siteId === watchedSiteId)
+  const filteredRacks = racks.filter(r => r.locationId === watchedLocationId)
+  const filteredTenants = tenants.filter(t => t.groupId === watchedTenantGroupId)
+
+
   function onSubmit(data: DeviceFormValues) {
-    const newDevice = {
+    const newDevice: Device = {
       ...data,
       tags: data.tags ? data.tags.split(",").map((tag) => tag.trim()) : [],
     }
@@ -149,16 +198,20 @@ export default function DevicesPage() {
     setIsDeleteDialogOpen(true)
   }
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: Device['status']) => {
     switch (status) {
-      case "Online":
-        return <Badge className="bg-green-500/20 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-500/20">{status}</Badge>
-      case "Offline":
-        return <Badge variant="destructive">{status}</Badge>
-      case "Provisioning":
-        return <Badge className="bg-amber-500/20 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-500/20">{status}</Badge>
+      case "active":
+        return <Badge className="bg-green-500/20 text-green-700 dark:bg-green-500/10 dark:text-green-400 border-green-500/20 capitalize">{status}</Badge>
+      case "offline":
+        return <Badge variant="destructive" className="capitalize">{status}</Badge>
+      case "provisioning":
+        return <Badge className="bg-amber-500/20 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border-amber-500/20 capitalize">{status}</Badge>
+      case "staged":
+        return <Badge className="bg-blue-500/20 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 border-blue-500/20 capitalize">{status}</Badge>
+      case "decommissioning":
+        return <Badge variant="secondary" className="capitalize">{status}</Badge>
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge variant="outline" className="capitalize">{status}</Badge>
     }
   }
 
@@ -190,15 +243,13 @@ export default function DevicesPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+                  <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem checked>
-                    Online
-                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem checked>Active</DropdownMenuCheckboxItem>
                   <DropdownMenuCheckboxItem>Offline</DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem>
-                    Provisioning
-                  </DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem>Provisioning</DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem>Staged</DropdownMenuCheckboxItem>
+                  <DropdownMenuCheckboxItem>Decommissioning</DropdownMenuCheckboxItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -218,7 +269,7 @@ export default function DevicesPage() {
                     </span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-2xl">
+                <DialogContent className="sm:max-w-3xl">
                   <DialogHeader>
                     <DialogTitle>Add New Device</DialogTitle>
                     <DialogDescription>
@@ -226,174 +277,97 @@ export default function DevicesPage() {
                     </DialogDescription>
                   </DialogHeader>
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Device Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="e.g., core-router-01" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                         <FormField
-                          control={form.control}
-                          name="deviceRoleId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Role</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                        <SelectValue placeholder="Select a role" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {deviceRoles.map((role) => (
-                                        <SelectItem key={role.id} value={role.id}>
-                                            {role.name}
-                                        </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name="deviceTypeId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Device Type</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                        <SelectValue placeholder="Select a type" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {deviceTypes.map((type) => (
-                                        <SelectItem key={type.id} value={type.id}>
-                                            {type.manufacturer} - {type.model}
-                                        </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="platformId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Platform (Optional)</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                        <SelectValue placeholder="Select a platform" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {platforms.map((platform) => (
-                                        <SelectItem key={platform.id} value={platform.id}>
-                                            {platform.name}
-                                        </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                         <FormField
-                          control={form.control}
-                          name="siteId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Site</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                        <SelectValue placeholder="Select a site" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {sites.map((site) => (
-                                        <SelectItem key={site.id} value={site.id}>
-                                            {site.name}
-                                        </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="status"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Status</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select a status" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="Online">Online</SelectItem>
-                                  <SelectItem value="Offline">Offline</SelectItem>
-                                  <SelectItem value="Provisioning">Provisioning</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <FormField
-                          control={form.control}
-                          name="ip"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Primary IP</FormLabel>
-                              <FormControl>
-                                <Input placeholder="e.g., 192.0.2.1" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      <FormField
-                        control={form.control}
-                        name="tags"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tags</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., critical, core" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              Enter a comma-separated list of tags.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <DialogFooter>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                      <ScrollArea className="h-[70vh] pr-6">
+                        <div className="space-y-8">
+                          {/* Device Section */}
+                          <div>
+                            <h3 className="text-lg font-medium mb-2">Device</h3>
+                            <Separator className="mb-4" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                               <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Device Name</FormLabel> <FormControl><Input placeholder="e.g., core-router-01" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                               <FormField control={form.control} name="deviceRoleId" render={({ field }) => ( <FormItem> <FormLabel>Role</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a role" /> </SelectTrigger> </FormControl> <SelectContent> {deviceRoles.map((role) => ( <SelectItem key={role.id} value={role.id}> {role.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                            </div>
+                            <div className="mt-4"><FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea placeholder="Brief description of the device's role and purpose." {...field} /></FormControl> <FormMessage /> </FormItem> )}/></div>
+                            <div className="mt-4"><FormField control={form.control} name="tags" render={({ field }) => ( <FormItem> <FormLabel>Tags</FormLabel> <FormControl> <Input placeholder="e.g., critical, core" {...field} /> </FormControl> <FormDescription>Enter a comma-separated list of tags.</FormDescription> <FormMessage /> </FormItem> )}/></div>
+                          </div>
+
+                          {/* Hardware Section */}
+                          <div>
+                            <h3 className="text-lg font-medium mb-2">Hardware</h3>
+                            <Separator className="mb-4" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <FormField control={form.control} name="deviceTypeId" render={({ field }) => ( <FormItem> <FormLabel>Device Type</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a type" /> </SelectTrigger> </FormControl> <SelectContent> {deviceTypes.map((type) => ( <SelectItem key={type.id} value={type.id}> {type.manufacturer} - {type.model} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                              <FormField control={form.control} name="airflow" render={({ field }) => ( <FormItem> <FormLabel>Airflow</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select airflow" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="front-to-rear">Front-to-rear</SelectItem> <SelectItem value="rear-to-front">Rear-to-front</SelectItem> <SelectItem value="side-to-rear">Side-to-rear</SelectItem> <SelectItem value="passive">Passive</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                              <FormField control={form.control} name="serial" render={({ field }) => ( <FormItem> <FormLabel>Serial Number</FormLabel> <FormControl><Input placeholder="Device serial number" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                              <FormField control={form.control} name="assetTag" render={({ field }) => ( <FormItem> <FormLabel>Asset Tag</FormLabel> <FormControl><Input placeholder="Unique asset tag" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                            </div>
+                          </div>
+
+                           {/* Location Section */}
+                           <div>
+                            <h3 className="text-lg font-medium mb-2">Location</h3>
+                            <Separator className="mb-4" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <FormField control={form.control} name="siteId" render={({ field }) => ( <FormItem> <FormLabel>Site</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a site" /> </SelectTrigger> </FormControl> <SelectContent> {sites.map((site) => ( <SelectItem key={site.id} value={site.id}> {site.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                              <FormField control={form.control} name="locationId" render={({ field }) => ( <FormItem> <FormLabel>Location</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedSiteId}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a location" /> </SelectTrigger> </FormControl> <SelectContent> {filteredLocations.map((loc) => ( <SelectItem key={loc.id} value={loc.id}> {loc.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                              <FormField control={form.control} name="rackId" render={({ field }) => ( <FormItem> <FormLabel>Rack</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedLocationId}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a rack" /> </SelectTrigger> </FormControl> <SelectContent> {filteredRacks.map((rack) => ( <SelectItem key={rack.id} value={rack.id}> {rack.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+                               <FormField control={form.control} name="rackFace" render={({ field }) => ( <FormItem> <FormLabel>Rack Face</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select face" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="front">Front</SelectItem> <SelectItem value="rear">Rear</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                               <FormField control={form.control} name="position" render={({ field }) => ( <FormItem> <FormLabel>Position (U)</FormLabel> <FormControl><Input type="number" placeholder="Lowest unit" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                                <FormField control={form.control} name="latitude" render={({ field }) => ( <FormItem> <FormLabel>Latitude</FormLabel> <FormControl><Input type="number" step="any" placeholder="e.g., 36.5297" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                                <FormField control={form.control} name="longitude" render={({ field }) => ( <FormItem> <FormLabel>Longitude</FormLabel> <FormControl><Input type="number" step="any" placeholder="e.g., -87.3595" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                            </div>
+                           </div>
+
+                           {/* Management Section */}
+                           <div>
+                            <h3 className="text-lg font-medium mb-2">Management</h3>
+                            <Separator className="mb-4" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField control={form.control} name="status" render={({ field }) => ( <FormItem> <FormLabel>Status</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a status" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="active">Active</SelectItem> <SelectItem value="offline">Offline</SelectItem> <SelectItem value="provisioning">Provisioning</SelectItem> <SelectItem value="staged">Staged</SelectItem> <SelectItem value="decommissioning">Decommissioning</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                <FormField control={form.control} name="platformId" render={({ field }) => ( <FormItem> <FormLabel>Platform</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a platform" /> </SelectTrigger> </FormControl> <SelectContent> {platforms.map((platform) => ( <SelectItem key={platform.id} value={platform.id}> {platform.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                                <FormField control={form.control} name="ip" render={({ field }) => ( <FormItem> <FormLabel>Primary IP</FormLabel> <FormControl><Input placeholder="e.g., 192.0.2.1" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                                <FormField control={form.control} name="configTemplate" render={({ field }) => ( <FormItem> <FormLabel>Config Template</FormLabel> <FormControl><Input placeholder="e.g., juniper-qfx-template.j2" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                            </div>
+                           </div>
+
+                           {/* Virtualization Section */}
+                            <div>
+                                <h3 className="text-lg font-medium mb-2">Virtualization</h3>
+                                <Separator className="mb-4" />
+                                <FormField control={form.control} name="clusterId" render={({ field }) => ( <FormItem> <FormLabel>Cluster</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Assign to a cluster" /> </SelectTrigger> </FormControl> <SelectContent> {clusters.map((cluster) => ( <SelectItem key={cluster.id} value={cluster.id}> {cluster.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                            </div>
+                            
+                            {/* Tenancy Section */}
+                            <div>
+                                <h3 className="text-lg font-medium mb-2">Tenancy</h3>
+                                <Separator className="mb-4" />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FormField control={form.control} name="tenantGroupId" render={({ field }) => ( <FormItem> <FormLabel>Tenant Group</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a group" /> </SelectTrigger> </FormControl> <SelectContent> {tenantGroups.map((group) => ( <SelectItem key={group.id} value={group.id}> {group.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                <FormField control={form.control} name="tenantId" render={({ field }) => ( <FormItem> <FormLabel>Tenant</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedTenantGroupId}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a tenant" /> </SelectTrigger> </FormControl> <SelectContent> {filteredTenants.map((tenant) => ( <SelectItem key={tenant.id} value={tenant.id}> {tenant.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                </div>
+                            </div>
+                            
+                            {/* Virtual Chassis Section */}
+                            <div>
+                                <h3 className="text-lg font-medium mb-2">Virtual Chassis</h3>
+                                <Separator className="mb-4" />
+                                <FormField control={form.control} name="virtualChassisId" render={({ field }) => ( <FormItem> <FormLabel>Virtual Chassis</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Assign to a virtual chassis" /> </SelectTrigger> </FormControl> <SelectContent> {virtualChassis.map((vc) => ( <SelectItem key={vc.id} value={vc.id}> {vc.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                                <FormField control={form.control} name="vcPosition" render={({ field }) => ( <FormItem> <FormLabel>VC Position</FormLabel> <FormControl><Input type="number" placeholder="Position in VC" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                                <FormField control={form.control} name="vcPriority" render={({ field }) => ( <FormItem> <FormLabel>VC Priority</FormLabel> <FormControl><Input type="number" placeholder="VC priority" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
+                                </div>
+                            </div>
+
+                        </div>
+                      </ScrollArea>
+                      <DialogFooter className="pt-8">
                         <Button type="button" variant="ghost" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
                         <Button type="submit">Add Device</Button>
                       </DialogFooter>
@@ -410,10 +384,10 @@ export default function DevicesPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Manufacturer</TableHead>
-                <TableHead className="hidden md:table-cell">Model</TableHead>
-                <TableHead className="hidden md:table-cell">Role</TableHead>
-                <TableHead className="hidden md:table-cell">Site</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Site</TableHead>
+                <TableHead className="hidden md:table-cell">Asset Tag</TableHead>
+                <TableHead className="hidden md:table-cell">Serial</TableHead>
                 <TableHead className="hidden lg:table-cell">Primary IP</TableHead>
                 <TableHead>Tags</TableHead>
                 <TableHead>
@@ -423,23 +397,22 @@ export default function DevicesPage() {
             </TableHeader>
             <TableBody>
               {devices.map((device) => {
-                const deviceType = getDeviceType(device.deviceTypeId);
                 const deviceRole = getDeviceRole(device.deviceRoleId);
                 const siteName = getSiteName(device.siteId);
                 return (
                 <TableRow key={device.name}>
                   <TableCell className="font-medium">{device.name}</TableCell>
                   <TableCell>{getStatusBadge(device.status)}</TableCell>
-                  <TableCell className="hidden md:table-cell">{deviceType?.manufacturer ?? 'N/A'}</TableCell>
-                  <TableCell className="hidden md:table-cell">{deviceType?.model ?? 'N/A'}</TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell>
                     {deviceRole?.name ?? 'N/A'}
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell>
                     {siteName}
                   </TableCell>
+                  <TableCell className="hidden md:table-cell font-mono">{device.assetTag ?? 'N/A'}</TableCell>
+                  <TableCell className="hidden md:table-cell font-mono">{device.serial ?? 'N/A'}</TableCell>
                   <TableCell className="hidden lg:table-cell font-mono">
-                    {device.ip}
+                    {device.ip ?? 'N/A'}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
