@@ -53,8 +53,8 @@ const initialContactRoles = [
 ]
 
 const initialContactAssignments = [
-    { id: 'assign-1', objectType: 'region', objectId: 'na', contactId: 'contact-2', roleId: 'role-admin'},
-    { id: 'assign-2', objectType: 'site', objectId: 'florim-tn', contactId: 'contact-1', roleId: 'role-technical'},
+    { id: 'assign-1', objectType: 'Region', objectId: 'na', contactId: 'contact-2', roleId: 'role-admin'},
+    { id: 'assign-2', objectType: 'Site', objectId: 'florim-tn', contactId: 'contact-1', roleId: 'role-technical'},
 ];
 
 const initialTags = [
@@ -89,7 +89,7 @@ const initialDeviceTypes = [
 ];
 
 const initialVirtualChassis = [
-    { id: 'vc-1', name: 'Core-Stack-01', domain: 'default', masterId: 'core-sw-01' }
+    { id: 'vc-1', name: 'Core-Stack-01', domain: 'default', masterId: 'dev-1' }
 ];
 
 const initialDevices = [
@@ -268,7 +268,7 @@ async function main() {
   await prisma.deviceRole.createMany({ data: initialDeviceRoles, skipDuplicates: true });
   await prisma.platform.createMany({ data: initialPlatforms, skipDuplicates: true });
   await prisma.deviceType.createMany({ data: initialDeviceTypes, skipDuplicates: true });
-  await prisma.virtualChassis.createMany({ data: initialVirtualChassis, skipDuplicates: true });
+  
   await prisma.rackRole.createMany({ data: initialRackRoles, skipDuplicates: true });
   await prisma.rackType.createMany({ data: initialRackTypes, skipDuplicates: true });
   await prisma.rack.createMany({ data: initialRacks.map(r => ({...r, locationId: r.locationId || null, roleId: r.roleId || null, typeId: r.typeId || null, tenantId: r.tenantId || null, startingUnit: r.startingUnit || 1, facilityId: r.facilityId || null, tenantGroupId: r.tenantGroupId || null, serial: r.serial || null, assetTag: r.assetTag || null })), skipDuplicates: true });
@@ -279,7 +279,7 @@ async function main() {
   
   await prisma.provider.createMany({ data: initialProviders, skipDuplicates: true });
   await prisma.circuitType.createMany({ data: initialCircuitTypes, skipDuplicates: true });
-  await prisma.circuit.createMany({ data: initialCircuits.map(c => ({...c, installDate: new Date(c.installDate)})), skipDuplicates: true });
+  await prisma.circuit.createMany({ data: initialCircuits.map(c => ({...c, installDate: c.installDate ? new Date(c.installDate) : new Date()})), skipDuplicates: true });
 
   await prisma.wirelessLan.createMany({ data: initialWirelessLans, skipDuplicates: true });
   await prisma.accessPoint.createMany({ data: initialAccessPoints, skipDuplicates: true });
@@ -292,7 +292,7 @@ async function main() {
   await prisma.clusterGroup.createMany({ data: initialClusterGroups, skipDuplicates: true });
   await prisma.cluster.createMany({ data: initialClusters.map(c => ({...c, siteId: c.siteId || null})), skipDuplicates: true });
   await prisma.virtualMachine.createMany({ data: initialVirtualMachines.map(vm => ({...vm, primaryIp: vm.primaryIp || null})) , skipDuplicates: true });
-
+  await prisma.virtualChassis.createMany({ data: initialVirtualChassis, skipDuplicates: true });
   await prisma.device.createMany({ data: initialDevices.map(d => ({...d, configBackup: d.configBackup, rackId: d.rackId || null, platformId: d.platformId || null, clusterId: d.clusterId || null, virtualChassisId: d.virtualChassisId || null, position: d.position || null, rackFace: d.rackFace || null, tenantId: d.tenantId || null, tenantGroupId: d.tenantGroupId || null, assetTag: d.assetTag || null, serial: d.serial || null})), skipDuplicates: true });
 
 
@@ -308,4 +308,3 @@ main()
     await prisma.$disconnect()
     process.exit(1)
   })
-

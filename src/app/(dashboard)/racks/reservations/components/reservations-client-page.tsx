@@ -52,6 +52,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Textarea } from "@/components/ui/textarea"
+import { createReservation, deleteReservation } from "../actions"
 
 type EnrichedRackReservation = RackReservation & {
   rack: Rack;
@@ -66,7 +67,10 @@ interface RackReservationsPageProps {
 
 const reservationSchema = z.object({
   rackId: z.string().min(1, "A rack must be selected"),
-  units: z.string().min(1, "At least one unit must be specified"),
+  units: z.string().min(1, "At least one unit must be specified")
+    .refine(val => val.split(',').every(v => !isNaN(parseInt(v.trim()))), {
+        message: "Units must be a comma-separated list of numbers."
+    }),
   tenantId: z.string().min(1, "A tenant must be selected"),
   description: z.string().min(1, "Description is required"),
 })
@@ -75,30 +79,37 @@ type ReservationFormValues = z.infer<typeof reservationSchema>
 
 export function ReservationsClientPage({ initialReservations, racks, tenants }: RackReservationsPageProps) {
   const { toast } = useToast()
-  const [reservations, setReservations] = useState(initialReservations)
+  const [reservations, setReservations] = useState<EnrichedRackReservation[]>(initialReservations)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
 
   const form = useForm<ReservationFormValues>({
     resolver: zodResolver(reservationSchema),
     defaultValues: {
-      rackId: "",
       units: "",
-      tenantId: "",
       description: "",
     },
   })
 
-  function onSubmit(data: ReservationFormValues) {
-    // This would be a server action
-    console.log(data);
-    toast({ title: "Success", description: "Rack reservation has been created." })
-    setIsAddDialogOpen(false)
-    form.reset()
+  async function onSubmit(data: ReservationFormValues) {
+    const result = await createReservation(data);
+    if (result.success && result.newReservation) {
+        setReservations((prev) => [...prev, result.newReservation as EnrichedRackReservation]);
+        toast({ title: "Success", description: "Rack reservation has been created." })
+        setIsAddDialogOpen(false)
+        form.reset()
+    } else {
+        toast({ title: "Error", description: result.message, variant: 'destructive' })
+    }
   }
 
-  const handleDelete = (id: string) => {
-    setReservations((prev) => prev.filter((r) => r.id !== id))
-    toast({ title: "Success", description: "Reservation has been deleted." })
+  const handleDelete = async (id: string) => {
+    const result = await deleteReservation(id);
+    if (result.success) {
+      setReservations((prev) => prev.filter((r) => r.id !== id))
+      toast({ title: "Success", description: "Reservation has been deleted." })
+    } else {
+        toast({ title: "Error", description: result.message, variant: 'destructive' })
+    }
   }
 
   return (
