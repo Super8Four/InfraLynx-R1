@@ -1,13 +1,7 @@
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import {
-    initialRegions,
-    initialSites,
-    initialContactAssignments,
-    initialContacts,
-    initialContactRoles
-} from '@/lib/data';
+import prisma from '@/lib/prisma';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,19 +9,27 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Globe, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function RegionDetailPage({ params }: { params: { id: string } }) {
-  const region = initialRegions.find((r) => r.id === params.id);
+export default async function RegionDetailPage({ params }: { params: { id: string } }) {
+  const region = await prisma.region.findUnique({
+    where: { id: params.id },
+    include: {
+      parent: true,
+      sites: true,
+      contactAssignments: {
+        include: {
+          contact: true,
+          role: true,
+        }
+      }
+    }
+  });
   
   if (!region) {
     notFound();
   }
 
-  const parentRegion = region.parentId ? initialRegions.find(r => r.id === region.parentId) : null;
-  const sitesInRegion = initialSites.filter(s => s.regionId === region.id);
-  const assignments = initialContactAssignments.filter(a => a.objectType === 'region' && a.objectId === region.id);
-
-  const getContactName = (id: string) => initialContacts.find(c => c.id === id)?.name ?? 'Unknown';
-  const getRoleName = (id: string) => initialContactRoles.find(r => r.id === id)?.name ?? 'Unknown';
+  const sitesInRegion = region.sites;
+  const assignments = region.contactAssignments;
 
   return (
     <div className="space-y-6">
@@ -49,7 +51,7 @@ export default function RegionDetailPage({ params }: { params: { id: string } })
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <h4 className="font-semibold text-sm mb-1">Parent Region</h4>
-              <p className="text-sm text-muted-foreground">{parentRegion ? parentRegion.name : '—'}</p>
+              <p className="text-sm text-muted-foreground">{region.parent ? region.parent.name : '—'}</p>
             </div>
             <div>
               <h4 className="font-semibold text-sm mb-1">Tags</h4>
@@ -120,8 +122,8 @@ export default function RegionDetailPage({ params }: { params: { id: string } })
                         <TableBody>
                             {assignments.map(a => (
                                 <TableRow key={a.id}>
-                                    <TableCell className="font-medium">{getContactName(a.contactId)}</TableCell>
-                                    <TableCell>{getRoleName(a.roleId)}</TableCell>
+                                    <TableCell className="font-medium">{a.contact.name}</TableCell>
+                                    <TableCell>{a.role.name}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

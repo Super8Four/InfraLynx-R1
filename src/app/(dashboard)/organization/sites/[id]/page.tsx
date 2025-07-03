@@ -2,21 +2,13 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-    initialSites, 
-    initialRegions, 
-    initialSiteGroups, 
-    initialTenants, 
-    initialTenantGroups, 
-    initialRacks, 
-    initialDevices 
-} from '@/lib/data';
+import prisma from '@/lib/prisma';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Building, MapPin, Globe, Users, Tag, Rss, Server, HardDrive, Clock, Hash, Warehouse, User, Contact } from 'lucide-react';
-import type { Site } from '@/lib/data';
+import type { Site } from '@prisma/client';
 
 const getStatusBadge = (status: Site['status']) => {
     switch (status) {
@@ -44,22 +36,29 @@ const InfoField = ({ label, value, icon: Icon }: { label: string, value: React.R
 );
 
 
-export default function SiteDetailPage({ params }: { params: { id: string } }) {
-  const site = initialSites.find((s) => s.id === params.id);
+export default async function SiteDetailPage({ params }: { params: { id: string } }) {
+  const site = await prisma.site.findUnique({
+    where: { id: params.id },
+    include: {
+      region: true,
+      group: true,
+      tenant: {
+        include: {
+          group: true,
+        }
+      },
+      racks: true,
+      devices: true,
+    }
+  });
   
   if (!site) {
     notFound();
   }
 
-  // Fetch related data
-  const region = site.regionId ? initialRegions.find(r => r.id === site.regionId) : null;
-  const group = site.groupId ? initialSiteGroups.find(g => g.id === site.groupId) : null;
-  const tenant = site.tenantId ? initialTenants.find(t => t.id === site.tenantId) : null;
-  const tenantGroup = site.tenantGroupId ? initialTenantGroups.find(tg => tg.id === site.tenantGroupId) : null;
-
   // Calculate stats
-  const rackCount = initialRacks.filter(r => r.siteId === site.id).length;
-  const deviceCount = initialDevices.filter(d => d.site === site.name).length;
+  const rackCount = site.racks.length;
+  const deviceCount = site.devices.length;
 
   const mapSrc = `https://maps.google.com/maps?q=${site.latitude},${site.longitude}&z=14&output=embed`;
 
@@ -89,8 +88,8 @@ export default function SiteDetailPage({ params }: { params: { id: string } }) {
             <CardHeader><CardTitle>Site Information</CardTitle></CardHeader>
             <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <InfoField label="Region" value={region?.name} icon={Globe} />
-                    <InfoField label="Site Group" value={group?.name} icon={Warehouse} />
+                    <InfoField label="Region" value={site.region?.name} icon={Globe} />
+                    <InfoField label="Site Group" value={site.group?.name} icon={Warehouse} />
                     <InfoField label="Facility" value={site.facility} icon={Building} />
                     <InfoField label="ASNs" value={site.asns} icon={Rss} />
                     <InfoField label="Time Zone" value={site.timeZone} icon={Clock} />
@@ -108,8 +107,8 @@ export default function SiteDetailPage({ params }: { params: { id: string } }) {
             <CardHeader><CardTitle>Tenancy</CardTitle></CardHeader>
             <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <InfoField label="Tenant Group" value={tenantGroup?.name} icon={Users} />
-                    <InfoField label="Tenant" value={tenant?.name} icon={User} />
+                    <InfoField label="Tenant Group" value={site.tenant?.group?.name} icon={Users} />
+                    <InfoField label="Tenant" value={site.tenant?.name} icon={User} />
                 </div>
             </CardContent>
           </Card>

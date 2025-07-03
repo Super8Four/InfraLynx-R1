@@ -15,9 +15,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { initialDevices as allDevices, initialDeviceRoles } from "@/lib/data"
+import type { Device as DeviceData, DeviceRole } from "@prisma/client"
 
-type Device = {
+type DeviceNode = {
   id: string
   name: string
   role: string
@@ -26,31 +26,24 @@ type Device = {
 }
 
 type Connection = {
-  from: string // device id
-  to: string // device id
+  from: string // device name
+  to: string // device name
 }
 
 // Hardcoded connections for visualization purposes.
+// In a real app, this would be derived from interface connections.
 const connections: Connection[] = [
-  { from: "edge-router-01", to: "firewall-corp" },
-  { from: "firewall-corp", to: "core-sw-01" },
-  { from: "core-sw-01", to: "access-sw-lobby" },
-  { from: "core-sw-01", to: "server-vmhost-01" },
   { from: "core-sw-01", to: "edge-router-01" },
+  { from: "core-sw-01", to: "core-sw-02" },
+  { from: "core-sw-01", to: "server-vmhost-01" },
+  { from: "core-sw-01", to: "firewall-corp" },
+  { from: "firewall-corp", to: "edge-router-01" },
+  { from: "access-sw-lobby", to: "core-sw-01" }, // Assuming this connects back to core
 ]
 
-// Dynamically create the list of devices for the graph from the connections list
-const connectedDeviceIds = new Set(connections.flatMap((c) => [c.from, c.to]))
-const initialDeviceData = allDevices
-  .filter((d) => connectedDeviceIds.has(d.name))
-  .map((d) => {
-    const roleInfo = initialDeviceRoles.find(role => role.id === d.deviceRoleId)
-    return {
-      id: d.name,
-      name: d.name,
-      role: roleInfo?.name ?? "Unknown",
-    }
-  })
+interface DeviceTopologyGraphProps {
+  initialDevices: (DeviceData & { deviceRole: DeviceRole | null })[];
+}
 
 const DeviceIcon = ({ role }: { role: string }) => {
   const iconProps = { className: "h-6 w-6 text-primary" }
@@ -59,33 +52,45 @@ const DeviceIcon = ({ role }: { role: string }) => {
     return <Server {...iconProps} className="h-6 w-6 text-muted-foreground" />
   }
 
-  if (role.toLowerCase().includes("switch")) {
+  const lowerCaseRole = role.toLowerCase();
+
+  if (lowerCaseRole.includes("switch")) {
     return <Network {...iconProps} />
   }
-  if (role.toLowerCase().includes("router")) {
+  if (lowerCaseRole.includes("router")) {
     return <RouterIcon {...iconProps} />
   }
-  if (role.toLowerCase().includes("firewall")) {
+  if (lowerCaseRole.includes("firewall")) {
     return <Shield {...iconProps} />
   }
   if (
-    role.toLowerCase().includes("server") ||
-    role.toLowerCase().includes("host")
+    lowerCaseRole.includes("server") ||
+    lowerCaseRole.includes("host")
   ) {
     return <Server {...iconProps} />
   }
-  // Default icon for unknown roles
   return <Server {...iconProps} className="h-6 w-6 text-muted-foreground" />
 }
 
-const DeviceTopologyGraph: React.FC = () => {
+const DeviceTopologyGraph: React.FC<DeviceTopologyGraphProps> = ({ initialDevices }) => {
   const svgRef = React.useRef<SVGSVGElement>(null)
-  const [nodes, setNodes] = React.useState<Device[]>([])
+  const [nodes, setNodes] = React.useState<DeviceNode[]>([])
   const [draggedNode, setDraggedNode] = React.useState<{ id: string; offsetX: number; offsetY: number } | null>(null)
   
   const width = 800
   const height = 500
   const nodeRadius = 45
+
+  const initialDeviceData = React.useMemo(() => {
+    const connectedDeviceIds = new Set(connections.flatMap((c) => [c.from, c.to]))
+    return initialDevices
+      .filter((d) => d.name && connectedDeviceIds.has(d.name))
+      .map((d) => ({
+        id: d.name!,
+        name: d.name!,
+        role: d.deviceRole?.name ?? "Unknown",
+      }))
+  }, [initialDevices])
 
   React.useEffect(() => {
     const numNodes = initialDeviceData.length
@@ -97,10 +102,10 @@ const DeviceTopologyGraph: React.FC = () => {
       x: center.x + radius * Math.cos((2 * Math.PI * i) / numNodes),
       y: center.y + radius * Math.sin((2 * Math.PI * i) / numNodes),
     })))
-  }, []);
+  }, [initialDeviceData]);
 
   const nodeMap = React.useMemo(() => {
-    const map = new Map<string, Device>()
+    const map = new Map<string, DeviceNode>()
     nodes.forEach((node) => map.set(node.id, node))
     return map
   }, [nodes])
@@ -120,7 +125,7 @@ const DeviceTopologyGraph: React.FC = () => {
         }
       })
       .filter((edge): edge is NonNullable<typeof edge> => edge !== null)
-  }, [connections, nodeMap])
+  }, [nodeMap])
 
   const getPointFromEvent = (event: React.MouseEvent) => {
     const svg = svgRef.current

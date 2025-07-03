@@ -34,10 +34,10 @@ const initialBranches: Branch[] = [
   { id: "main", name: "main", from: "", merged: false },
 ]
 
+// This is now just the starting point. The context will manage the history.
 const initialCommits: Commit[] = [
   { id: 'c1', message: "Initial commit", branch: "system", author: "system", timestamp: "3 days ago", body: "System initialization." },
-  { id: 'c2', message: "Add core networking devices", branch: "main", author: "admin", timestamp: "2 days ago", body: "- Added core-sw-01\n- Added edge-router-01" },
-].reverse() // Newest first
+].reverse()
 
 const BranchingContext = createContext<BranchingContextType | undefined>(undefined);
 
@@ -49,7 +49,7 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
 
   const createBranch = (name: string, fromBranch: string): boolean => {
     if (branches.some(b => b.name === name)) {
-      return false; // Indicate failure
+      return false;
     }
 
     const newBranch: Branch = {
@@ -58,46 +58,27 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
       from: fromBranch,
       merged: false,
     }
-    const baseTimestamp = Date.now();
     const creationCommit: Commit = {
-        id: `c${baseTimestamp}`,
+        id: `c${Date.now()}`,
         message: `feat: Create branch '${name}' from '${fromBranch}'`,
         branch: name,
         author: 'admin',
         timestamp: 'Just now'
     }
 
-    const workCommits: Commit[] = [
-      {
-        id: `c${baseTimestamp + 2}`,
-        message: `feat: Add new DC site in Dublin`,
-        branch: name,
-        author: 'admin',
-        timestamp: 'Just now',
-        body: 'Added a new Site object for the Dublin, Ireland location. Set status to "planned".'
-      },
-      {
-        id: `c${baseTimestamp + 1}`,
-        message: `fix: Update firewall rules for new site`,
-        branch: name,
-        author: 'admin',
-        timestamp: 'Just now',
-        body: 'Modified device "firewall-corp" to allow traffic to the new Dublin subnets.'
-      },
-    ];
-
     setBranches(prev => [...prev, newBranch]);
-    setCommits(prev => [ ...workCommits, creationCommit, ...prev]);
+    // In a real implementation, you might snapshot data here.
+    // For now, we just create the branch and a commit log for it.
+    setCommits(prev => [creationCommit, ...prev]);
     setActiveBranch(newBranch.name);
     toast({ title: "Branch Created", description: `Switched to new branch: ${name}` });
-    return true; // Indicate success
+    return true;
   }
 
   const mergeActiveBranch = (mergeMessage?: string) => {
     const currentBranch = branches.find(b => b.id === activeBranch);
     if (!currentBranch || currentBranch.name === 'main' || currentBranch.merged) return;
 
-    // This is a simplification; a real implementation would be more complex.
     const branchCommits = commits.filter(c => c.branch === currentBranch.name);
     
     const commitSummaries = branchCommits.length > 0 
@@ -107,7 +88,7 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
     const mergeCommit: Commit = {
       id: `c${Date.now() + Math.random()}`,
       message: mergeMessage?.trim() || `Merge branch '${currentBranch.name}'`,
-      body: commitSummaries,
+      body: `This would trigger server actions to persist changes to the database.\n\nChanges:\n${commitSummaries}`,
       branch: currentBranch.from,
       author: 'admin',
       timestamp: 'Just now'
@@ -116,7 +97,7 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
     setCommits(prev => [mergeCommit, ...prev]);
     setBranches(prev => prev.map(b => b.id === activeBranch ? { ...b, merged: true } : b));
     setActiveBranch(currentBranch.from);
-    toast({ title: "Merge Successful", description: `Branch '${currentBranch.name}' has been merged into '${currentBranch.from}'.`})
+    toast({ title: "Merge Successful", description: `Branch '${currentBranch.name}' merged into '${currentBranch.from}'. In a real app, data would now be persisted.`})
   }
 
   const updateFromMain = () => {
@@ -130,13 +111,28 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
       id: `c${Date.now() + Math.random()}`,
       message: `merge: Merge branch 'main' into '${currentBranch.name}'`,
       body: `Pulled latest updates from main branch.`,
-      branch: currentBranch.name, // The commit is ON the feature branch
+      branch: currentBranch.name,
       author: 'admin',
       timestamp: 'Just now'
     };
     
     setCommits(prev => [mergeCommit, ...prev]);
     toast({ title: "Branch Updated", description: `Latest changes from 'main' have been merged into '${currentBranch.name}'.`});
+  }
+
+  // This is a placeholder for adding commits when actions happen on a branch
+  const addCommit = (message: string, body?: string) => {
+      if (activeBranch === 'main') return;
+
+      const newCommit: Commit = {
+          id: `c${Date.now()}`,
+          message,
+          body,
+          branch: activeBranch,
+          author: 'admin',
+          timestamp: 'Just now'
+      };
+      setCommits(prev => [newCommit, ...prev]);
   }
 
   return (
@@ -153,5 +149,3 @@ export const useBranching = () => {
   }
   return context;
 }
-
-    

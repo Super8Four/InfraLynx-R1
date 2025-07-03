@@ -1,17 +1,14 @@
 
-"use client"
-
-import { useState } from "react"
-import { MoreHorizontal, PlusCircle } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
+import prisma from "@/lib/prisma";
+import { MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +16,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -27,19 +24,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import {
-  initialVirtualChassis,
-  initialDevices,
-  type VirtualChassis,
-} from "@/lib/data"
+} from "@/components/ui/table";
 
-export default function VirtualChassisPage() {
-  const [virtualChassis] = useState<VirtualChassis[]>(initialVirtualChassis)
 
-  const getMasterDevice = (masterId: string) => {
-    return initialDevices.find(d => d.name === masterId);
-  }
+export default async function VirtualChassisPage() {
+  const virtualChassis = await prisma.virtualChassis.findMany({
+    include: {
+      master: true,
+      members: true,
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -50,10 +44,8 @@ export default function VirtualChassisPage() {
               <CardTitle>Virtual Chassis</CardTitle>
               <CardDescription>Manage groups of devices that act as a single logical unit.</CardDescription>
             </div>
-            <Button>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Virtual Chassis
-            </Button>
+            {/* TODO: Add Dialog */}
+            <Button disabled>Add Virtual Chassis</Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -68,41 +60,36 @@ export default function VirtualChassisPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {virtualChassis.map((vc) => {
-                const master = getMasterDevice(vc.masterId);
-                return (
-                  <TableRow key={vc.id}>
-                    <TableCell className="font-medium">{vc.name}</TableCell>
-                    <TableCell>{master?.name ?? 'N/A'}</TableCell>
-                    <TableCell>{vc.domain}</TableCell>
-                    <TableCell>{vc.memberIds.length}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>Manage Members</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
+              {virtualChassis.map((vc) => (
+                <TableRow key={vc.id}>
+                  <TableCell className="font-medium">{vc.name}</TableCell>
+                  <TableCell>{vc.master?.name ?? 'N/A'}</TableCell>
+                  <TableCell>{vc.domain}</TableCell>
+                  <TableCell>{vc.members.length}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem>Manage Members</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive">
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

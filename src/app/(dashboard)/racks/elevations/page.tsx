@@ -13,16 +13,6 @@ import {
 import { Button } from "@/components/ui/button"
 import Rack from "@/components/rack"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { 
-    initialRacks, 
-    initialDevices, 
-    initialSites, 
-    initialDeviceTypes, 
-    initialDeviceRoles, 
-    type Rack as RackType,
-    type Device as DeviceType,
-} from "@/lib/data"
-import type { DeviceInRack, ProcessedRack } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 import { ChevronDown, PlusCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
@@ -32,6 +22,21 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Device, Rack as RackType, Site, DeviceRole, DeviceType } from "@prisma/client"
+import { DeviceInRack, ProcessedRack } from "@/lib/types"
+
+
+// This needs to be a server component to fetch initial data
+// For now, we will simulate this with props.
+
+interface RackElevationsPageProps {
+    initialRacks: RackType[];
+    initialDevices: Device[];
+    initialSites: Site[];
+    initialDeviceTypes: DeviceType[];
+    initialDeviceRoles: DeviceRole[];
+}
+
 
 const addDeviceSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -41,10 +46,10 @@ const addDeviceSchema = z.object({
 
 type AddDeviceFormValues = z.infer<typeof addDeviceSchema>;
 
-export default function RacksPage() {
+export default function RackElevationsPage({ initialRacks, initialDevices, initialSites, initialDeviceTypes, initialDeviceRoles }: RackElevationsPageProps) {
     const { toast } = useToast()
     const [allRacks, setAllRacks] = useState<RackType[]>(initialRacks)
-    const [allDevices, setAllDevices] = useState<DeviceType[]>(initialDevices)
+    const [allDevices, setAllDevices] = useState<Device[]>(initialDevices)
     
     const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false)
     const [newDeviceLocation, setNewDeviceLocation] = useState<{ rackId: string, unit: number } | null>(null)
@@ -59,7 +64,7 @@ export default function RacksPage() {
     });
 
     const processedRacks = useMemo((): ProcessedRack[] => {
-        const deviceMap = new Map<string, DeviceType[]>();
+        const deviceMap = new Map<string, Device[]>();
         allDevices.forEach(device => {
             if (device.rackId) {
                 if (!deviceMap.has(device.rackId)) {
@@ -75,7 +80,7 @@ export default function RacksPage() {
                 const deviceType = initialDeviceTypes.find(dt => dt.id === device.deviceTypeId);
                 const deviceRole = initialDeviceRoles.find(dr => dr.id === device.deviceRoleId);
                 return {
-                    id: device.name,
+                    id: device.id,
                     name: device.name,
                     u: device.position || 0,
                     height: deviceType?.u_height || 1,
@@ -87,12 +92,12 @@ export default function RacksPage() {
 
             return { ...rack, devices: devicesInRack };
         });
-    }, [allRacks, allDevices]);
+    }, [allRacks, allDevices, initialDeviceTypes, initialDeviceRoles]);
 
     const sites = useMemo(() => {
         const siteIdsWithRacks = new Set(allRacks.map(r => r.siteId));
         return initialSites.filter(site => siteIdsWithRacks.has(site.id));
-    }, [allRacks]);
+    }, [allRacks, initialSites]);
     
     const [selectedSiteId, setSelectedSiteId] = useState<string>('all');
 
@@ -152,7 +157,7 @@ export default function RacksPage() {
         }
 
         setAllDevices(currentDevices => currentDevices.map(d => {
-            if (d.name === deviceToMove.id) {
+            if (d.id === deviceToMove.id) {
                 return { ...d, rackId: targetRackId, position: targetUnit };
             }
             return d;
@@ -196,7 +201,8 @@ export default function RacksPage() {
             return;
         }
 
-        const newDevice: DeviceType = {
+        const newDevice: Device = {
+            id: `dev-${Date.now()}`,
             name: data.name,
             deviceRoleId: data.deviceRoleId,
             deviceTypeId: data.deviceTypeId,
@@ -207,6 +213,17 @@ export default function RacksPage() {
             tags: [],
             assetTag: `AST-${Math.floor(Math.random() * 9000) + 1000}`,
             serial: `SN-${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
+            airflow: null,
+            clusterId: null,
+            configBackup: null,
+            ip: null,
+            platformId: null,
+            rackFace: 'front',
+            tenantId: null,
+            tenantGroupId: null,
+            virtualChassisId: null,
+            vcPosition: null,
+            vcPriority: null
         };
 
         setAllDevices(prev => [...prev, newDevice]);
@@ -346,5 +363,3 @@ export default function RacksPage() {
     </div>
   )
 }
-
-  
