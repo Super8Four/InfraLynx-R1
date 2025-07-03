@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -51,7 +51,15 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { initialTags, type Tag } from "@/lib/data"
+import {
+  initialTags,
+  type Tag,
+  initialDevices,
+  initialRegions,
+  initialSites,
+  initialRacks,
+} from "@/lib/data"
+import { Badge } from "@/components/ui/badge"
 
 const tagSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -62,28 +70,70 @@ type TagFormValues = z.infer<typeof tagSchema>
 
 export default function TagsPage() {
   const { toast } = useToast()
-  const [tags, setTags] = useState<Tag[]>(initialTags)
+  const [userCreatedTags, setUserCreatedTags] = useState<Tag[]>(initialTags)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+
+  const allTags = useMemo(() => {
+    const discoveredTagSet = new Set<string>()
+
+    initialDevices.forEach((d) => d.tags.forEach((t) => discoveredTagSet.add(t)))
+    initialRegions.forEach((r) => r.tags.forEach((t) => discoveredTagSet.add(t)))
+    initialSites.forEach((s) => s.tags.forEach((t) => discoveredTagSet.add(t)))
+    initialRacks.forEach((r) => r.tags.forEach((t) => discoveredTagSet.add(t)))
+
+    const discoveredTags: Tag[] = Array.from(discoveredTagSet).map((name) => ({
+      id: `discovered-${name}`,
+      name,
+      description: "Discovered from an object",
+    }))
+
+    const combined = [...userCreatedTags, ...discoveredTags]
+    const uniqueTags = Array.from(
+      new Map(combined.map((tag) => [tag.name.toLowerCase(), tag])).values()
+    )
+
+    uniqueTags.sort((a, b) => a.name.localeCompare(b.name))
+
+    return uniqueTags
+  }, [userCreatedTags])
 
   const form = useForm<TagFormValues>({
     resolver: zodResolver(tagSchema),
     defaultValues: { name: "", description: "" },
   })
-  
+
   function onSubmit(data: TagFormValues) {
+    if (allTags.some((t) => t.name.toLowerCase() === data.name.toLowerCase())) {
+      toast({
+        title: "Duplicate Tag",
+        description: "A tag with this name already exists.",
+        variant: "destructive",
+      })
+      return
+    }
+
     const newTag: Tag = {
       id: `tag-${Date.now()}`,
-      ...data,
+      name: data.name,
       description: data.description || "",
     }
-    setTags((prev) => [...prev, newTag])
+    setUserCreatedTags((prev) => [...prev, newTag])
     toast({ title: "Success", description: "Tag has been created." })
     setIsAddDialogOpen(false)
     form.reset()
   }
 
   const handleDelete = (id: string) => {
-    setTags((prev) => prev.filter((t) => t.id !== id))
+    if (id.startsWith("discovered-")) {
+      toast({
+        title: "Cannot Delete Tag",
+        description:
+          "This tag is in use by at least one object. To remove it, you must first remove it from all associated objects.",
+        variant: "destructive",
+      })
+      return
+    }
+    setUserCreatedTags((prev) => prev.filter((t) => t.id !== id))
     toast({ title: "Success", description: "Tag has been deleted." })
   }
 
@@ -94,7 +144,10 @@ export default function TagsPage() {
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Tags</CardTitle>
-              <CardDescription>Manage tags for organizing objects.</CardDescription>
+              <CardDescription>
+                Manage tags for organizing objects. Tags in use by objects are
+                discovered automatically.
+              </CardDescription>
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
@@ -106,9 +159,15 @@ export default function TagsPage() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add New Tag</DialogTitle>
+                  <DialogDescription>
+                    Create a new tag that can be assigned to objects.
+                  </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form
+                    onSubmit={form.handleSubmit(onSubmit)}
+                    className="space-y-4"
+                  >
                     <FormField
                       control={form.control}
                       name="name"
@@ -129,14 +188,23 @@ export default function TagsPage() {
                         <FormItem>
                           <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="A brief description of the tag's purpose." {...field} />
+                            <Textarea
+                              placeholder="A brief description of the tag's purpose."
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     <DialogFooter>
-                      <Button type="button" variant="ghost" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => setIsAddDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
                       <Button type="submit">Add Tag</Button>
                     </DialogFooter>
                   </form>
@@ -151,13 +219,17 @@ export default function TagsPage() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tags.map((tag) => (
+              {allTags.map((tag) => (
                 <TableRow key={tag.id}>
-                  <TableCell className="font-medium">{tag.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <Badge variant="secondary">{tag.name}</Badge>
+                  </TableCell>
                   <TableCell>{tag.description}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -168,11 +240,12 @@ export default function TagsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem disabled={tag.id.startsWith('discovered-')} >Edit</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDelete(tag.id)}
+                           disabled={tag.id.startsWith('discovered-')}
                         >
                           Delete
                         </DropdownMenuItem>
