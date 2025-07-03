@@ -320,7 +320,22 @@ export default function DevicesPage() {
                             <Separator className="mb-4" />
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Device Name</FormLabel> <FormControl><Input placeholder="e.g., core-router-01" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
-                               <FormField control={form.control} name="deviceRoleId" render={({ field }) => ( <FormItem> <FormLabel>Role</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a role" /> </SelectTrigger> </FormControl> <SelectContent> {deviceRoles.map((role) => ( <SelectItem key={role.id} value={role.id}> {role.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                               <FormField control={form.control} name="deviceRoleId" render={({ field }) => ( 
+                                 <FormItem> 
+                                   <FormLabel>Role</FormLabel> 
+                                   <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                     <FormControl> 
+                                       <SelectTrigger> 
+                                         <SelectValue placeholder="Select a role" /> 
+                                       </SelectTrigger> 
+                                     </FormControl> 
+                                     <SelectContent> 
+                                       {deviceRoles.map((role) => ( <SelectItem key={role.id} value={role.id}> {role.name} </SelectItem> ))} 
+                                     </SelectContent> 
+                                   </Select> 
+                                   <FormMessage /> 
+                                 </FormItem> 
+                               )}/>
                             </div>
                             <div className="mt-4"><FormField control={form.control} name="description" render={({ field }) => ( <FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea placeholder="Brief description of the device's role and purpose." {...field} /></FormControl> <FormMessage /> </FormItem> )}/></div>
                             <div className="mt-4"><FormField control={form.control} name="tags" render={({ field }) => ( <FormItem> <FormLabel>Tags</FormLabel> <FormControl> <Input placeholder="e.g., critical, core" {...field} /> </FormControl> <FormDescription>Enter a comma-separated list of tags.</FormDescription> <FormMessage /> </FormItem> )}/></div>
@@ -331,8 +346,41 @@ export default function DevicesPage() {
                             <h3 className="text-lg font-medium mb-2">Hardware</h3>
                             <Separator className="mb-4" />
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <FormField control={form.control} name="deviceTypeId" render={({ field }) => ( <FormItem> <FormLabel>Device Type</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a type" /> </SelectTrigger> </FormControl> <SelectContent> {deviceTypes.map((type) => ( <SelectItem key={type.id} value={type.id}> {type.manufacturer} - {type.model} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-                              <FormField control={form.control} name="airflow" render={({ field }) => ( <FormItem> <FormLabel>Airflow</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select airflow" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="front-to-rear">Front-to-rear</SelectItem> <SelectItem value="rear-to-front">Rear-to-front</SelectItem> <SelectItem value="side-to-rear">Side-to-rear</SelectItem> <SelectItem value="passive">Passive</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                              <FormField control={form.control} name="deviceTypeId" render={({ field }) => ( 
+                                <FormItem> 
+                                  <FormLabel>Device Type</FormLabel> 
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                    <FormControl> 
+                                      <SelectTrigger> 
+                                        <SelectValue placeholder="Select a type" /> 
+                                      </SelectTrigger> 
+                                    </FormControl> 
+                                    <SelectContent> 
+                                      {deviceTypes.map((type) => ( <SelectItem key={type.id} value={type.id}> {type.manufacturer} - {type.model} </SelectItem> ))} 
+                                    </SelectContent> 
+                                  </Select> 
+                                  <FormMessage /> 
+                                </FormItem> 
+                              )}/>
+                              <FormField control={form.control} name="airflow" render={({ field }) => ( 
+                                <FormItem> 
+                                  <FormLabel>Airflow</FormLabel> 
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                    <FormControl> 
+                                      <SelectTrigger> 
+                                        <SelectValue placeholder="Select airflow" /> 
+                                      </SelectTrigger> 
+                                    </FormControl> 
+                                    <SelectContent> 
+                                      <SelectItem value="front-to-rear">Front-to-rear</SelectItem> 
+                                      <SelectItem value="rear-to-front">Rear-to-front</SelectItem> 
+                                      <SelectItem value="side-to-rear">Side-to-rear</SelectItem> 
+                                      <SelectItem value="passive">Passive</SelectItem> 
+                                    </SelectContent> 
+                                  </Select> 
+                                  <FormMessage /> 
+                                </FormItem> 
+                              )}/>
                               <FormField control={form.control} name="serial" render={({ field }) => ( <FormItem> <FormLabel>Serial Number</FormLabel> <FormControl><Input placeholder="Device serial number" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
                               <FormField control={form.control} name="assetTag" render={({ field }) => ( <FormItem> <FormLabel>Asset Tag</FormLabel> <FormControl><Input placeholder="Unique asset tag" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
                             </div>
@@ -343,12 +391,73 @@ export default function DevicesPage() {
                             <h3 className="text-lg font-medium mb-2">Location</h3>
                             <Separator className="mb-4" />
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              <FormField control={form.control} name="siteId" render={({ field }) => ( <FormItem> <FormLabel>Site</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a site" /> </SelectTrigger> </FormControl> <SelectContent> {sites.map((site) => ( <SelectItem key={site.id} value={site.id}> {site.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-                              <FormField control={form.control} name="locationId" render={({ field }) => ( <FormItem> <FormLabel>Location</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedSiteId}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a location" /> </SelectTrigger> </FormControl> <SelectContent> {filteredLocations.map((loc) => ( <SelectItem key={loc.id} value={loc.id}> {loc.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-                              <FormField control={form.control} name="rackId" render={({ field }) => ( <FormItem> <FormLabel>Rack</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedLocationId}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a rack" /> </SelectTrigger> </FormControl> <SelectContent> {filteredRacks.map((rack) => ( <SelectItem key={rack.id} value={rack.id}> {rack.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                              <FormField control={form.control} name="siteId" render={({ field }) => ( 
+                                <FormItem> 
+                                  <FormLabel>Site</FormLabel> 
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                    <FormControl> 
+                                      <SelectTrigger> 
+                                        <SelectValue placeholder="Select a site" /> 
+                                      </SelectTrigger> 
+                                    </FormControl> 
+                                    <SelectContent> 
+                                      {sites.map((site) => ( <SelectItem key={site.id} value={site.id}> {site.name} </SelectItem> ))} 
+                                    </SelectContent> 
+                                  </Select> 
+                                  <FormMessage /> 
+                                </FormItem> 
+                              )}/>
+                              <FormField control={form.control} name="locationId" render={({ field }) => ( 
+                                <FormItem> 
+                                  <FormLabel>Location</FormLabel> 
+                                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedSiteId}> 
+                                    <FormControl> 
+                                      <SelectTrigger> 
+                                        <SelectValue placeholder="Select a location" /> 
+                                      </SelectTrigger> 
+                                    </FormControl> 
+                                    <SelectContent> 
+                                      {filteredLocations.map((loc) => ( <SelectItem key={loc.id} value={loc.id}> {loc.name} </SelectItem> ))} 
+                                    </SelectContent> 
+                                  </Select> 
+                                  <FormMessage /> 
+                                </FormItem> 
+                              )}/>
+                              <FormField control={form.control} name="rackId" render={({ field }) => ( 
+                                <FormItem> 
+                                  <FormLabel>Rack</FormLabel> 
+                                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedLocationId}> 
+                                    <FormControl> 
+                                      <SelectTrigger> 
+                                        <SelectValue placeholder="Select a rack" /> 
+                                      </SelectTrigger> 
+                                    </FormControl> 
+                                    <SelectContent> 
+                                      {filteredRacks.map((rack) => ( <SelectItem key={rack.id} value={rack.id}> {rack.name} </SelectItem> ))} 
+                                    </SelectContent> 
+                                  </Select> 
+                                  <FormMessage /> 
+                                </FormItem> 
+                              )}/>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
-                               <FormField control={form.control} name="rackFace" render={({ field }) => ( <FormItem> <FormLabel>Rack Face</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select face" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="front">Front</SelectItem> <SelectItem value="rear">Rear</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                               <FormField control={form.control} name="rackFace" render={({ field }) => ( 
+                                 <FormItem> 
+                                   <FormLabel>Rack Face</FormLabel> 
+                                   <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                     <FormControl> 
+                                       <SelectTrigger> 
+                                         <SelectValue placeholder="Select face" /> 
+                                       </SelectTrigger> 
+                                     </FormControl> 
+                                     <SelectContent> 
+                                       <SelectItem value="front">Front</SelectItem> 
+                                       <SelectItem value="rear">Rear</SelectItem> 
+                                     </SelectContent> 
+                                   </Select> 
+                                   <FormMessage /> 
+                                 </FormItem> 
+                               )}/>
                                <FormField control={form.control} name="position" render={({ field }) => ( <FormItem> <FormLabel>Position (U)</FormLabel> <FormControl><Input type="number" placeholder="Lowest unit" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
@@ -362,8 +471,42 @@ export default function DevicesPage() {
                             <h3 className="text-lg font-medium mb-2">Management</h3>
                             <Separator className="mb-4" />
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <FormField control={form.control} name="status" render={({ field }) => ( <FormItem> <FormLabel>Status</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a status" /> </SelectTrigger> </FormControl> <SelectContent> <SelectItem value="active">Active</SelectItem> <SelectItem value="offline">Offline</SelectItem> <SelectItem value="provisioning">Provisioning</SelectItem> <SelectItem value="staged">Staged</SelectItem> <SelectItem value="decommissioning">Decommissioning</SelectItem> </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-                                <FormField control={form.control} name="platformId" render={({ field }) => ( <FormItem> <FormLabel>Platform</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a platform" /> </SelectTrigger> </FormControl> <SelectContent> {platforms.map((platform) => ( <SelectItem key={platform.id} value={platform.id}> {platform.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                <FormField control={form.control} name="status" render={({ field }) => ( 
+                                  <FormItem> 
+                                    <FormLabel>Status</FormLabel> 
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                      <FormControl> 
+                                        <SelectTrigger> 
+                                          <SelectValue placeholder="Select a status" /> 
+                                        </SelectTrigger> 
+                                      </FormControl> 
+                                      <SelectContent> 
+                                        <SelectItem value="active">Active</SelectItem> 
+                                        <SelectItem value="offline">Offline</SelectItem> 
+                                        <SelectItem value="provisioning">Provisioning</SelectItem> 
+                                        <SelectItem value="staged">Staged</SelectItem> 
+                                        <SelectItem value="decommissioning">Decommissioning</SelectItem> 
+                                      </SelectContent> 
+                                    </Select> 
+                                    <FormMessage /> 
+                                  </FormItem> 
+                                )}/>
+                                <FormField control={form.control} name="platformId" render={({ field }) => ( 
+                                  <FormItem> 
+                                    <FormLabel>Platform</FormLabel> 
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                      <FormControl> 
+                                        <SelectTrigger> 
+                                          <SelectValue placeholder="Select a platform" /> 
+                                        </SelectTrigger> 
+                                      </FormControl> 
+                                      <SelectContent> 
+                                        {platforms.map((platform) => ( <SelectItem key={platform.id} value={platform.id}> {platform.name} </SelectItem> ))} 
+                                      </SelectContent> 
+                                    </Select> 
+                                    <FormMessage /> 
+                                  </FormItem> 
+                                )}/>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                 <FormField control={form.control} name="ip" render={({ field }) => ( <FormItem> <FormLabel>Primary IP</FormLabel> <FormControl><Input placeholder="e.g., 192.0.2.1" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
@@ -375,7 +518,22 @@ export default function DevicesPage() {
                             <div>
                                 <h3 className="text-lg font-medium mb-2">Virtualization</h3>
                                 <Separator className="mb-4" />
-                                <FormField control={form.control} name="clusterId" render={({ field }) => ( <FormItem> <FormLabel>Cluster</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Assign to a cluster" /> </SelectTrigger> </FormControl> <SelectContent> {clusters.map((cluster) => ( <SelectItem key={cluster.id} value={cluster.id}> {cluster.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                <FormField control={form.control} name="clusterId" render={({ field }) => ( 
+                                  <FormItem> 
+                                    <FormLabel>Cluster</FormLabel> 
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                      <FormControl> 
+                                        <SelectTrigger> 
+                                          <SelectValue placeholder="Assign to a cluster" /> 
+                                        </SelectTrigger> 
+                                      </FormControl> 
+                                      <SelectContent> 
+                                        {clusters.map((cluster) => ( <SelectItem key={cluster.id} value={cluster.id}> {cluster.name} </SelectItem> ))} 
+                                      </SelectContent> 
+                                    </Select> 
+                                    <FormMessage /> 
+                                  </FormItem> 
+                                )}/>
                             </div>
                             
                             {/* Tenancy Section */}
@@ -383,8 +541,38 @@ export default function DevicesPage() {
                                 <h3 className="text-lg font-medium mb-2">Tenancy</h3>
                                 <Separator className="mb-4" />
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <FormField control={form.control} name="tenantGroupId" render={({ field }) => ( <FormItem> <FormLabel>Tenant Group</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a group" /> </SelectTrigger> </FormControl> <SelectContent> {tenantGroups.map((group) => ( <SelectItem key={group.id} value={group.id}> {group.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
-                                <FormField control={form.control} name="tenantId" render={({ field }) => ( <FormItem> <FormLabel>Tenant</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedTenantGroupId}> <FormControl> <SelectTrigger> <SelectValue placeholder="Select a tenant" /> </SelectTrigger> </FormControl> <SelectContent> {filteredTenants.map((tenant) => ( <SelectItem key={tenant.id} value={tenant.id}> {tenant.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                <FormField control={form.control} name="tenantGroupId" render={({ field }) => ( 
+                                  <FormItem> 
+                                    <FormLabel>Tenant Group</FormLabel> 
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                      <FormControl> 
+                                        <SelectTrigger> 
+                                          <SelectValue placeholder="Select a group" /> 
+                                        </SelectTrigger> 
+                                      </FormControl> 
+                                      <SelectContent> 
+                                        {tenantGroups.map((group) => ( <SelectItem key={group.id} value={group.id}> {group.name} </SelectItem> ))} 
+                                      </SelectContent> 
+                                    </Select> 
+                                    <FormMessage /> 
+                                  </FormItem> 
+                                )}/>
+                                <FormField control={form.control} name="tenantId" render={({ field }) => ( 
+                                  <FormItem> 
+                                    <FormLabel>Tenant</FormLabel> 
+                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!watchedTenantGroupId}> 
+                                      <FormControl> 
+                                        <SelectTrigger> 
+                                          <SelectValue placeholder="Select a tenant" /> 
+                                        </SelectTrigger> 
+                                      </FormControl> 
+                                      <SelectContent> 
+                                        {filteredTenants.map((tenant) => ( <SelectItem key={tenant.id} value={tenant.id}> {tenant.name} </SelectItem> ))} 
+                                      </SelectContent> 
+                                    </Select> 
+                                    <FormMessage /> 
+                                  </FormItem> 
+                                )}/>
                                 </div>
                             </div>
                             
@@ -392,7 +580,22 @@ export default function DevicesPage() {
                             <div>
                                 <h3 className="text-lg font-medium mb-2">Virtual Chassis</h3>
                                 <Separator className="mb-4" />
-                                <FormField control={form.control} name="virtualChassisId" render={({ field }) => ( <FormItem> <FormLabel>Virtual Chassis</FormLabel> <Select onValueChange={field.onChange} defaultValue={field.value}> <FormControl> <SelectTrigger> <SelectValue placeholder="Assign to a virtual chassis" /> </SelectTrigger> </FormControl> <SelectContent> {virtualChassis.map((vc) => ( <SelectItem key={vc.id} value={vc.id}> {vc.name} </SelectItem> ))} </SelectContent> </Select> <FormMessage /> </FormItem> )}/>
+                                <FormField control={form.control} name="virtualChassisId" render={({ field }) => ( 
+                                  <FormItem> 
+                                    <FormLabel>Virtual Chassis</FormLabel> 
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}> 
+                                      <FormControl> 
+                                        <SelectTrigger> 
+                                          <SelectValue placeholder="Assign to a virtual chassis" /> 
+                                        </SelectTrigger> 
+                                      </FormControl> 
+                                      <SelectContent> 
+                                        {virtualChassis.map((vc) => ( <SelectItem key={vc.id} value={vc.id}> {vc.name} </SelectItem> ))} 
+                                      </SelectContent> 
+                                    </Select> 
+                                    <FormMessage /> 
+                                  </FormItem> 
+                                )}/>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                                 <FormField control={form.control} name="vcPosition" render={({ field }) => ( <FormItem> <FormLabel>VC Position</FormLabel> <FormControl><Input type="number" placeholder="Position in VC" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
                                 <FormField control={form.control} name="vcPriority" render={({ field }) => ( <FormItem> <FormLabel>VC Priority</FormLabel> <FormControl><Input type="number" placeholder="VC priority" {...field} /></FormControl> <FormMessage /> </FormItem> )}/>
@@ -525,3 +728,5 @@ export default function DevicesPage() {
     </>
   )
 }
+
+    
