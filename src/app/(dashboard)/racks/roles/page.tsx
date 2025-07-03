@@ -56,6 +56,7 @@ import { initialRackRoles, type RackRole } from "@/lib/data"
 const roleSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
+  color: z.string().regex(/^#[0-9a-f]{6}$/i, { message: "Please provide a valid hex color." }).optional(),
 })
 
 type RoleFormValues = z.infer<typeof roleSchema>
@@ -67,14 +68,15 @@ export default function RackRolesPage() {
 
   const form = useForm<RoleFormValues>({
     resolver: zodResolver(roleSchema),
-    defaultValues: { name: "", description: "" },
+    defaultValues: { name: "", description: "", color: "#cccccc" },
   })
   
   function onSubmit(data: RoleFormValues) {
     const newRole: RackRole = {
       id: `role-${Date.now()}`,
-      ...data,
+      name: data.name,
       description: data.description || "",
+      color: data.color || "#cccccc",
     }
     setRoles((prev) => [...prev, newRole])
     toast({ title: "Success", description: "Rack role has been added." })
@@ -124,6 +126,19 @@ export default function RackRolesPage() {
                     />
                     <FormField
                       control={form.control}
+                      name="color"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Color</FormLabel>
+                          <FormControl>
+                            <Input type="color" {...field} className="p-1 h-10 w-full" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem>
@@ -157,7 +172,15 @@ export default function RackRolesPage() {
             <TableBody>
               {roles.map((role) => (
                 <TableRow key={role.id}>
-                  <TableCell className="font-medium">{role.name}</TableCell>
+                  <TableCell className="font-medium">
+                     <div className="flex items-center gap-2">
+                        <span
+                        className="h-4 w-4 rounded-full border"
+                        style={{ backgroundColor: role.color }}
+                        />
+                        <span>{role.name}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>{role.description}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

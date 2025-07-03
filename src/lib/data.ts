@@ -365,21 +365,22 @@ export type RackRole = {
     id: string;
     name: string;
     description: string;
+    color: string;
 };
 export const initialRackRoles: RackRole[] = [
-    { id: 'role-1', name: 'Core Network', description: 'For core switches and routers' },
-    { id: 'role-2', name: 'Compute', description: 'For servers and virtualization hosts' },
-    { id: 'role-3', name: 'Storage', description: 'For SAN/NAS equipment' },
+    { id: 'role-1', name: 'Core Network', description: 'For core switches and routers', color: '#3b82f6' },
+    { id: 'role-2', name: 'Compute', description: 'For servers and virtualization hosts', color: '#f97316' },
+    { id: 'role-3', name: 'Storage', description: 'For SAN/NAS equipment', color: '#8b5cf6' },
 ];
 
-export type RackTypeInfo = {
+export type RackType = {
     id: string;
     manufacturer: string;
     model: string;
     u_height: number;
     width: '19in' | '23in';
 };
-export const initialRackTypes: RackTypeInfo[] = [
+export const initialRackTypes: RackType[] = [
     { id: 'type-1', manufacturer: 'APC', model: 'AR3100', u_height: 42, width: '19in' },
     { id: 'type-2', manufacturer: 'Dell', model: 'PowerEdge 4220', u_height: 42, width: '19in' },
 ];
@@ -413,6 +414,7 @@ export type Rack = {
     mountingDepth?: number;
     deviceCount: number;
     spaceUtilization: number;
+    comments?: string;
 };
 
 export const initialRacks: Rack[] = [
@@ -432,6 +434,7 @@ export const initialRacks: Rack[] = [
         tenantId: "tenant-a",
         deviceCount: 12,
         spaceUtilization: 71,
+        comments: "Main distribution rack for Row A.",
     },
     {
         id: 'rack-2',
@@ -448,6 +451,7 @@ export const initialRacks: Rack[] = [
         tenantId: "tenant-a",
         deviceCount: 0,
         spaceUtilization: 0,
+        comments: "Reserved for future compute expansion.",
     },
     {
         id: 'rack-3',
@@ -462,6 +466,7 @@ export const initialRacks: Rack[] = [
         tenantId: 'tenant-b',
         deviceCount: 4,
         spaceUtilization: 25,
+        comments: "IDF for 2nd floor.",
     },
 ];
 
