@@ -190,20 +190,51 @@ export default function DashboardPage() {
     },
   ]
 
-  const layouts = {
-    lg: settings.isBranchingEnabled
-      ? [
-          { i: "stats", x: 0, y: 0, w: 12, h: 1, isResizable: false },
-          { i: "branching", x: 0, y: 1, w: 7, h: 4 },
-          { i: "ip-usage", x: 7, y: 1, w: 5, h: 4 },
-          { i: "activity", x: 0, y: 5, w: 12, h: 4 },
-        ]
-      : [
-          { i: "stats", x: 0, y: 0, w: 12, h: 1, isResizable: false },
-          { i: "ip-usage", x: 0, y: 1, w: 6, h: 4 },
-          { i: "activity", x: 6, y: 1, w: 6, h: 4 },
-        ],
-  }
+  const layouts = React.useMemo(() => {
+    const getLayouts = (isBranchingEnabled: boolean) => {
+        const stackedLayout = (cols: number) => {
+            if (isBranchingEnabled) {
+                return [
+                    { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false },
+                    { i: "branching", x: 0, y: 1, w: cols, h: 4 },
+                    { i: "ip-usage", x: 0, y: 5, w: cols, h: 4 },
+                    { i: "activity", x: 0, y: 9, w: cols, h: 4 },
+                ];
+            }
+            return [
+                { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false },
+                { i: "ip-usage", x: 0, y: 1, w: cols, h: 4 },
+                { i: "activity", x: 0, y: 5, w: cols, h: 4 },
+            ];
+        };
+        
+        const sideBySideLayout = (cols: number, split: number) => {
+             if (isBranchingEnabled) {
+                return [
+                    { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false },
+                    { i: "branching", x: 0, y: 1, w: split, h: 4 },
+                    { i: "ip-usage", x: split, y: 1, w: cols - split, h: 4 },
+                    { i: "activity", x: 0, y: 5, w: cols, h: 4 },
+                ];
+             }
+             return [
+                 { i: "stats", x: 0, y: 0, w: cols, h: 1, isResizable: false },
+                 { i: "ip-usage", x: 0, y: 1, w: Math.floor(cols / 2), h: 4 },
+                 { i: "activity", x: Math.floor(cols / 2), y: 1, w: Math.ceil(cols / 2), h: 4 },
+             ];
+        }
+
+        return {
+            lg: sideBySideLayout(12, 7),
+            md: sideBySideLayout(10, 5),
+            sm: stackedLayout(6),
+            xs: stackedLayout(4),
+            xxs: stackedLayout(2),
+        };
+    };
+    
+    return getLayouts(settings.isBranchingEnabled);
+}, [settings.isBranchingEnabled]);
 
   return (
     <ResponsiveGridLayout
