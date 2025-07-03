@@ -33,7 +33,7 @@ const initialBranches: Branch[] = [
 
 const initialCommits: Commit[] = [
   { id: 'c2', message: "Add core networking devices", branch: "main", author: "admin", timestamp: "2 days ago" },
-  { id: 'c1', message: "Initial commit", branch: "main", author: "system", timestamp: "3 days ago" },
+  { id: 'c1', message: "Initial commit", branch: "system", timestamp: "3 days ago" },
 ].reverse() // Newest first
 
 const BranchingContext = createContext<BranchingContextType | undefined>(undefined);
@@ -56,7 +56,7 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
       merged: false,
     }
     const newCommit: Commit = {
-        id: `c${commits.length + 1}`,
+        id: `c${Date.now()}`,
         message: `feat: Create branch '${name}' from '${activeBranch}'`,
         branch: name,
         author: 'admin',
@@ -88,18 +88,18 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
       },
     ];
 
-    let commitIdCounter = commits.length;
+    const baseTimestamp = Date.now();
     
     // Create new commits for the feature branch. Newest first.
-    const featureCommits: Commit[] = simulatedWork.reverse().map(work => ({
+    const featureCommits: Commit[] = simulatedWork.reverse().map((work, index) => ({
       ...work,
-      id: `c${++commitIdCounter}`,
+      id: `c${baseTimestamp + index}`,
       timestamp: 'Just now'
     }));
 
     // Create the merge commit, which is the newest of all.
     const mergeCommit: Commit = {
-      id: `c${++commitIdCounter}`,
+      id: `c${baseTimestamp + simulatedWork.length}`,
       message: `merge: Merge branch '${currentBranch.name}' into '${currentBranch.from}'`,
       branch: currentBranch.from,
       author: 'admin',
