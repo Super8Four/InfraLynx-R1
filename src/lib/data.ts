@@ -400,7 +400,7 @@ export const initialDeviceTypes: DeviceType[] = [
     { id: 'dt-1', manufacturer: 'Juniper', model: 'QFX5120', u_height: 2 },
     { id: 'dt-2', manufacturer: 'Cisco', model: 'ASR1001-X', u_height: 1 },
     { id: 'dt-3', manufacturer: 'Arista', model: '720XP', u_height: 1 },
-    { id: 'dt-4', name: 'Dell', model: 'PowerEdge R740', u_height: 2 },
+    { id: 'dt-4', manufacturer: 'Dell', model: 'PowerEdge R740', u_height: 2 },
     { id: 'dt-5', manufacturer: 'Palo Alto', model: 'PA-3220', u_height: 2 },
 ];
 
@@ -512,3 +512,4 @@ export const initialVirtualMachines: VirtualMachine[] = [
     { id: 'vm-2', name: 'db-prod-01', status: 'active', clusterId: 'cluster-1', role: 'Database Server', vcpus: 8, memory: 32, disk: 500, primaryIp: '10.1.1.12' },
     { id: 'vm-3', name: 'test-runner-ci', status: 'offline', clusterId: 'cluster-2', role: 'CI/CD Runner', vcpus: 2, memory: 4, disk: 50, primaryIp: '192.168.10.100' },
 ];
+
