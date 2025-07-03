@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -47,30 +46,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import BranchGraph from "@/components/branch-graph"
-
-type Branch = {
-  id: string
-  name: string
-  from: string
-  merged: boolean
-}
-
-type Commit = {
-  id: string
-  message: string
-  branch: string
-  author: string
-  timestamp: string
-}
-
-const initialBranches: Branch[] = [
-  { id: "main", name: "main", from: "", merged: false },
-]
-
-const initialCommits: Commit[] = [
-  { id: 'c1', message: "Initial commit", branch: "main", author: "system", timestamp: "3 days ago" },
-  { id: 'c2', message: "Add core networking devices", branch: "main", author: "admin", timestamp: "2 days ago" },
-]
+import { useBranching } from "@/context/branching-context"
 
 const branchSchema = z.object({
   name: z.string().min(3, "Branch name must be at least 3 characters.").regex(/^[a-z0-9-]+$/, "Can only contain lowercase letters, numbers, and hyphens."),
@@ -80,9 +56,8 @@ type BranchFormValues = z.infer<typeof branchSchema>
 
 export default function BranchingPage() {
   const { toast } = useToast()
-  const [branches, setBranches] = useState<Branch[]>(initialBranches)
-  const [commits, setCommits] = useState<Commit[]>(initialCommits)
-  const [activeBranch, setActiveBranch] = useState<string>("main")
+  const { branches, commits, activeBranch, setActiveBranch, createBranch, mergeActiveBranch } = useBranching();
+
   const [isAddBranchOpen, setIsAddBranchOpen] = useState(false)
   const [isMergeConfirmOpen, setIsMergeConfirmOpen] = useState(false)
 
@@ -92,66 +67,18 @@ export default function BranchingPage() {
   })
 
   const handleCreateBranch = (data: BranchFormValues) => {
-    if (branches.some(b => b.name === data.name)) {
-      form.setError("name", { message: "Branch name already exists." })
-      return
+    const success = createBranch(data.name);
+    if (success) {
+        setIsAddBranchOpen(false)
+        form.reset()
+    } else {
+        form.setError("name", { message: "Branch name already exists." })
     }
-
-    const newBranch: Branch = {
-      id: data.name,
-      name: data.name,
-      from: activeBranch,
-      merged: false,
-    }
-    const newCommit: Commit = {
-        id: `c${commits.length + 1}`,
-        message: `feat: Create branch '${data.name}' from '${activeBranch}'`,
-        branch: data.name,
-        author: 'admin',
-        timestamp: 'Just now'
-    }
-
-    setBranches(prev => [...prev, newBranch])
-    setCommits(prev => [newCommit, ...prev]);
-    setActiveBranch(newBranch.name)
-    toast({ title: "Branch Created", description: `Switched to new branch: ${data.name}` })
-    setIsAddBranchOpen(false)
-    form.reset()
   }
 
   const handleMerge = () => {
-    const currentBranch = branches.find(b => b.id === activeBranch);
-    if (!currentBranch || currentBranch.name === 'main') return;
-
-    const newCommits: Commit[] = [
-        {
-            id: `c${commits.length + 1}`,
-            message: `feat: Add new DC site in Dublin`,
-            branch: currentBranch.name,
-            author: 'admin',
-            timestamp: 'Just now'
-        },
-        {
-            id: `c${commits.length + 2}`,
-            message: `fix: Update firewall rules for new site`,
-            branch: currentBranch.name,
-            author: 'admin',
-            timestamp: 'Just now'
-        },
-        {
-            id: `c${commits.length + 3}`,
-            message: `merge: Merge branch '${currentBranch.name}' into '${currentBranch.from}'`,
-            branch: currentBranch.from,
-            author: 'admin',
-            timestamp: 'Just now'
-        },
-    ]
-
-    setBranches(prev => prev.map(b => b.id === activeBranch ? { ...b, merged: true } : b));
-    setCommits(prev => [newCommits.slice(0, 2).reverse(), {id: newCommits[2].id, message: newCommits[2].message, branch: newCommits[2].branch, author: newCommits[2].author, timestamp: newCommits[2].timestamp}, ...prev.slice(1)].flat());
-    setActiveBranch(currentBranch.from);
+    mergeActiveBranch();
     setIsMergeConfirmOpen(false);
-    toast({ title: "Merge Successful", description: `Branch '${currentBranch.name}' has been merged into '${currentBranch.from}'.`})
   }
   
   const currentBranchIsMergable = activeBranch !== 'main' && !branches.find(b => b.id === activeBranch)?.merged;
