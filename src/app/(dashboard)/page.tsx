@@ -8,24 +8,22 @@ import {
   Server,
   MoreVertical,
   CheckCircle,
+  GitBranch,
+  ArrowRight,
 } from "lucide-react"
 import {
-  Line,
-  LineChart,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip,
   Cell,
-  CartesianGrid,
-  XAxis,
-  YAxis,
 } from "recharts"
 import {
   initialDevices,
   prefixes,
   recentActivity,
 } from "@/lib/data"
+import { useBranching } from "@/context/branching-context"
+import BranchGraph from "@/components/branch-graph"
 
 import {
   Card,
@@ -95,23 +93,11 @@ const ipUsageConfig = {
 } satisfies ChartConfig
 
 
-// Rack Capacity Chart (remains static for now)
-const rackCapacityData = [
-  { date: "2024-01", dc1: 65, dc2: 45 },
-  { date: "2024-02", dc1: 70, dc2: 50 },
-  { date: "2024-03", dc1: 72, dc2: 60 },
-  { date: "2024-04", dc1: 78, dc2: 65 },
-  { date: "2024-05", dc1: 82, dc2: 70 },
-  { date: "2024-06", dc1: 85, dc2: 75 },
-]
-
-const rackCapacityConfig = {
-  dc1: { label: "DC-1", color: "hsl(var(--chart-1))" },
-  dc2: { label: "DC-2", color: "hsl(var(--chart-2))" },
-} satisfies ChartConfig
-
-
 export default function DashboardPage() {
+  const { branches, commits, activeBranch, setActiveBranch } = useBranching()
+  const activeBranches = branches.filter(b => !b.merged && b.name !== 'main')
+  const recentCommits = commits.slice(0, 15)
+
   const STATS = [
     {
       title: "Total Devices",
@@ -166,40 +152,43 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4">
-          <CardHeader>
-            <CardTitle>Rack Capacity Trend</CardTitle>
-            <CardDescription>
-              Monthly rack unit utilization across primary data centers.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={rackCapacityConfig} className="h-[250px]">
-              <LineChart data={rackCapacityData}>
-                <CartesianGrid vertical={false} />
-                <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v) => `${v}%`}
-                />
-                <Tooltip content={<ChartTooltipContent />} />
-                <Line
-                  dataKey="dc1"
-                  type="monotone"
-                  stroke="var(--color-dc1)"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  dataKey="dc2"
-                  type="monotone"
-                  stroke="var(--color-dc2)"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ChartContainer>
-          </CardContent>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                <CardTitle>Branching Overview</CardTitle>
+                <CardDescription>
+                    {activeBranches.length} active feature branches.
+                </CardDescription>
+                </div>
+                <Button asChild variant="outline" size="sm">
+                    <Link href="/branching">
+                        Manage Branches
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    {activeBranches.length > 0 ? (
+                        activeBranches.map(branch => (
+                            <button key={branch.id} onClick={() => setActiveBranch(branch.id)} className="w-full text-left">
+                                <div className="p-2 rounded-md hover:bg-muted flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <GitBranch className="h-4 w-4 text-primary" />
+                                        <span className="font-medium text-sm">{branch.name}</span>
+                                        <Badge variant="secondary">from '{branch.from}'</Badge>
+                                    </div>
+                                    {activeBranch === branch.id && <Badge variant="default">Active</Badge>}
+                                </div>
+                            </button>
+                        ))
+                    ) : (
+                        <p className="text-sm text-muted-foreground px-2">No active feature branches.</p>
+                    )}
+                </div>
+                <div className="border-t pt-4">
+                    <BranchGraph branches={branches} commits={recentCommits} activeBranch={activeBranch} />
+                </div>
+            </CardContent>
         </Card>
 
         <Card className="lg:col-span-3">
