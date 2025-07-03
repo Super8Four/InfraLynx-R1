@@ -56,6 +56,7 @@ import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import BranchGraph from "@/components/branch-graph"
 import { useBranching } from "@/context/branching-context"
+import { Textarea } from "@/components/ui/textarea"
 
 const branchSchema = z.object({
   name: z.string().min(3, "Branch name must be at least 3 characters.").regex(/^[a-z0-9-]+$/, "Can only contain lowercase letters, numbers, and hyphens."),
@@ -72,6 +73,7 @@ export default function BranchingPage() {
   const [isMergeConfirmOpen, setIsMergeConfirmOpen] = useState(false)
   const [isGraphModalOpen, setIsGraphModalOpen] = useState(false)
   const [isUpdateConfirmOpen, setIsUpdateConfirmOpen] = useState(false)
+  const [mergeMessage, setMergeMessage] = useState("")
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchSchema),
@@ -89,8 +91,9 @@ export default function BranchingPage() {
   }
 
   const handleMerge = () => {
-    mergeActiveBranch();
+    mergeActiveBranch(mergeMessage);
     setIsMergeConfirmOpen(false);
+    setMergeMessage('');
   }
 
   const handleUpdateFromMain = () => {
@@ -100,6 +103,7 @@ export default function BranchingPage() {
   
   const currentBranchIsActionable = activeBranch !== 'main' && !branches.find(b => b.id === activeBranch)?.merged;
   const recentCommits = commits.slice(0, 20);
+  const changesOnBranch = commits.filter(c => c.branch === activeBranch && !c.message.startsWith(`feat: Create branch`));
 
   return (
     <div className="space-y-6">
@@ -202,26 +206,35 @@ export default function BranchingPage() {
                                 </AlertDialogContent>
                             </AlertDialog>
 
-                            <AlertDialog open={isMergeConfirmOpen} onOpenChange={setIsMergeConfirmOpen}>
-                                <AlertDialogTrigger asChild>
+                            <Dialog open={isMergeConfirmOpen} onOpenChange={setIsMergeConfirmOpen}>
+                                <DialogTrigger asChild>
                                     <Button variant="default" className="w-full bg-green-600 hover:bg-green-700">
                                         <GitMerge className="mr-2 h-4 w-4" />
                                         Merge Branch '{activeBranch}'
                                     </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure you want to merge?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will merge the changes from <span className="font-mono bg-muted p-1 rounded-md">{activeBranch}</span> into <span className="font-mono bg-muted p-1 rounded-md">{branches.find(b => b.id === activeBranch)?.from}</span>. This action cannot be undone.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleMerge} className="bg-green-600 hover:bg-green-700">Confirm Merge</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Merge branch '{activeBranch}'</DialogTitle>
+                                        <DialogDescription>
+                                            Create a merge commit to bring changes from '{activeBranch}' into '{branches.find(b => b.id === activeBranch)?.from}'.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-2 py-2">
+                                        <Label htmlFor="merge-message">Commit message (optional)</Label>
+                                        <Textarea
+                                            id="merge-message"
+                                            placeholder={`Merge branch '${activeBranch}'`}
+                                            value={mergeMessage}
+                                            onChange={(e) => setMergeMessage(e.target.value)}
+                                        />
+                                    </div>
+                                    <DialogFooter>
+                                        <Button variant="ghost" onClick={() => setIsMergeConfirmOpen(false)}>Cancel</Button>
+                                        <Button onClick={handleMerge} className="bg-green-600 hover:bg-green-700">Confirm Merge</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     )}
                 </CardContent>
@@ -233,14 +246,19 @@ export default function BranchingPage() {
                     <CardDescription>Simulated list of configuration changes.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {activeBranch === 'main' ? (
+                    {activeBranch === 'main' || changesOnBranch.length === 0 ? (
                         <p className="text-sm text-muted-foreground">The main branch reflects the current production configuration. No changes are staged here.</p>
                     ) : (
                         <ul className="space-y-3 text-sm">
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" /><span>ADD Site "Dublin Office"</span></li>
-                            <li className="flex items-center"><Check className="h-4 w-4 mr-2 text-green-500" /><span>ADD Rack "B201" to Site "Dublin Office"</span></li>
-                             <li className="flex items-center"><ChevronsRight className="h-4 w-4 mr-2 text-yellow-500" /><span>MODIFY Device "firewall-corp"</span></li>
-                            <li className="flex items-center"><PlusCircle className="h-4 w-4 mr-2 text-blue-500" /><span>ADD 2 new IP Prefixes</span></li>
+                           {changesOnBranch.reverse().map(commit => (
+                            <li key={commit.id} className="flex items-start">
+                                <Check className="h-4 w-4 mr-2 mt-1 text-green-500 shrink-0" />
+                                <div>
+                                <p>{commit.message}</p>
+                                {commit.body && <p className="text-xs text-muted-foreground pl-1">{commit.body}</p>}
+                                </div>
+                            </li>
+                           ))}
                         </ul>
                     )}
                 </CardContent>
@@ -278,7 +296,12 @@ export default function BranchingPage() {
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-medium text-sm">{commit.message}</p>
-                                    <p className="text-xs text-muted-foreground">
+                                    {commit.body && (
+                                        <div className="mt-2 text-xs text-muted-foreground bg-muted/50 p-2 rounded-md border">
+                                            <pre className="whitespace-pre-wrap font-sans">{commit.body}</pre>
+                                        </div>
+                                    )}
+                                    <p className="text-xs text-muted-foreground mt-1.5">
                                         <span className="font-semibold">{commit.author}</span> committed on branch <span className="font-mono bg-muted/50 p-0.5 rounded-sm">{commit.branch}</span> - {commit.timestamp}
                                     </p>
                                 </div>
@@ -306,3 +329,5 @@ export default function BranchingPage() {
     </div>
   )
 }
+
+    
