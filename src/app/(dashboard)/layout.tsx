@@ -9,12 +9,21 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
-import { LifeBuoy, Github } from "lucide-react"
+import { LifeBuoy, Github, Bug } from "lucide-react"
 import DashboardHeader from "@/components/dashboard-header"
 import { NavLinks } from "@/components/nav-links"
 import { Button } from "@/components/ui/button"
 import { BranchingProvider } from "@/context/branching-context"
 import { useSettings } from "@/context/settings-context"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const LynxIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -70,10 +79,41 @@ export default function DashboardLayout({
             <NavLinks />
           </SidebarContent>
           <SidebarFooter>
-            <Button variant="ghost" className="w-full justify-start gap-2">
-              <LifeBuoy className="h-4 w-4" />
-              <span className="group-data-[collapsible=icon]:hidden">Support</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full justify-start gap-2">
+                  <LifeBuoy className="h-4 w-4" />
+                  <span className="group-data-[collapsible=icon]:hidden">Support</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56 mb-2" side="top" align="start">
+                <DropdownMenuLabel>Resources</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link href="https://github.com/Super8Four/InfraLynx-R1" target="_blank" rel="noopener noreferrer">
+                      <Github className="mr-2 h-4 w-4" />
+                      <span>GitHub Repository</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="https://github.com/Super8Four/InfraLynx-R1/issues" target="_blank" rel="noopener noreferrer">
+                      <Bug className="mr-2 h-4 w-4" />
+                      <span>Report an Issue</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Powered By</DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem disabled>Next.js & React</DropdownMenuItem>
+                  <DropdownMenuItem disabled>Prisma & PostgreSQL</DropdownMenuItem>
+                  <DropdownMenuItem disabled>Tailwind CSS</DropdownMenuItem>
+                  <DropdownMenuItem disabled>ShadCN UI</DropdownMenuItem>
+                  <DropdownMenuItem disabled>Genkit</DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarFooter>
         </div>
       </Sidebar>
@@ -82,17 +122,6 @@ export default function DashboardLayout({
         <main className="flex-1 overflow-auto bg-muted/30 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
-        <footer className="border-t bg-background/95 px-6 py-4 text-center text-sm text-muted-foreground">
-          <a
-            href="https://github.com/Super8Four/InfraLynx-R1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 hover:text-primary transition-colors"
-          >
-            <Github className="h-4 w-4" />
-            <span>View on GitHub</span>
-          </a>
-        </footer>
       </SidebarInset>
     </SidebarProvider>
   )
