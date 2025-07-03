@@ -1,5 +1,7 @@
+
 "use client"
 
+import Link from "next/link"
 import {
   Cable,
   Network,
@@ -29,7 +31,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
@@ -59,7 +60,7 @@ import {
 
 // Stats
 const totalDevices = initialDevices.length
-const onlineDevices = initialDevices.filter(d => d.status === "Online").length
+const onlineDevices = initialDevices.filter(d => d.status === "active").length
 const onlineDevicePercentage = totalDevices > 0 ? (onlineDevices / totalDevices) * 100 : 0
 
 const totalPrefixes = prefixes.length
@@ -111,49 +112,55 @@ const rackCapacityConfig = {
 
 
 export default function DashboardPage() {
-  const MOCK_STATS = [
+  const STATS = [
     {
       title: "Total Devices",
       value: totalDevices.toLocaleString(),
-      change: `${onlineDevices} Online`,
+      change: `${onlineDevices} Active`,
       icon: Server,
+      href: "/devices"
     },
     {
         title: "Device Health",
         value: `${onlineDevicePercentage.toFixed(1)}%`,
-        change: "Online",
+        change: "Active",
         icon: CheckCircle,
+        href: "/devices"
     },
     {
       title: "IPs Assigned",
       value: assignedIPs.toLocaleString(),
       change: `of ${totalIPs.toLocaleString()}`,
       icon: Network,
+      href: "/ipam"
     },
     {
       title: "Active Prefixes",
       value: activePrefixes.toLocaleString(),
       change: `of ${totalPrefixes} total`,
       icon: Cable,
+      href: "/ipam"
     },
   ]
 
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {MOCK_STATS.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.change}</p>
-            </CardContent>
-          </Card>
+        {STATS.map((stat) => (
+          <Link href={stat.href} key={stat.title}>
+            <Card className="hover:bg-muted/50 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {stat.title}
+                </CardTitle>
+                <stat.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className="text-xs text-muted-foreground">{stat.change}</p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
