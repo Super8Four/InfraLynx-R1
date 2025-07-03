@@ -4,7 +4,7 @@ import * as React from "react"
 import {
   Server,
   Shield,
-  Switch,
+  Network,
   Router as RouterIcon,
 } from "lucide-react"
 
@@ -14,12 +14,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 import { initialDevices as allDevices } from "@/lib/data"
 
 type Device = {
   id: string
   name: string
   role: string
+  x: number
+  y: number
 }
 
 type Connection = {
@@ -38,7 +41,7 @@ const connections: Connection[] = [
 
 // Dynamically create the list of devices for the graph from the connections list
 const connectedDeviceIds = new Set(connections.flatMap((c) => [c.from, c.to]))
-const devices: Device[] = allDevices
+const initialDeviceData = allDevices
   .filter((d) => connectedDeviceIds.has(d.name))
   .map((d) => ({
     id: d.name,
@@ -50,7 +53,7 @@ const DeviceIcon = ({ role }: { role: string }) => {
   const iconProps = { className: "h-6 w-6 text-primary" }
 
   if (role.toLowerCase().includes("switch")) {
-    return <Switch {...iconProps} />
+    return <Network {...iconProps} />
   }
   if (role.toLowerCase().includes("router")) {
     return <RouterIcon {...iconProps} />
@@ -69,24 +72,28 @@ const DeviceIcon = ({ role }: { role: string }) => {
 }
 
 const DeviceTopologyGraph: React.FC = () => {
+  const svgRef = React.useRef<SVGSVGElement>(null)
+  const [nodes, setNodes] = React.useState<Device[]>([])
+  const [draggedNode, setDraggedNode] = React.useState<{ id: string; offsetX: number; offsetY: number } | null>(null)
+  
   const width = 800
   const height = 500
-  const nodeRadius = 45 // increased radius for icon and text
+  const nodeRadius = 45
 
-  const nodes = React.useMemo(() => {
-    const numNodes = devices.length
-    if (numNodes === 0) return []
+  React.useEffect(() => {
+    const numNodes = initialDeviceData.length
+    if (numNodes === 0) return
     const center = { x: width / 2, y: height / 2 }
     const radius = Math.min(width, height) / 2.5 - nodeRadius
-    return devices.map((device, i) => ({
+    setNodes(initialDeviceData.map((device, i) => ({
       ...device,
       x: center.x + radius * Math.cos((2 * Math.PI * i) / numNodes),
       y: center.y + radius * Math.sin((2 * Math.PI * i) / numNodes),
-    }))
-  }, [])
+    })))
+  }, []);
 
   const nodeMap = React.useMemo(() => {
-    const map = new Map<string, (typeof nodes)[0]>()
+    const map = new Map<string, Device>()
     nodes.forEach((node) => map.set(node.id, node))
     return map
   }, [nodes])
@@ -108,9 +115,59 @@ const DeviceTopologyGraph: React.FC = () => {
       .filter((edge): edge is NonNullable<typeof edge> => edge !== null)
   }, [connections, nodeMap])
 
+  const getPointFromEvent = (event: React.MouseEvent) => {
+    const svg = svgRef.current
+    if (!svg) return { x: 0, y: 0 }
+    const pt = svg.createSVGPoint()
+    pt.x = event.clientX
+    pt.y = event.clientY
+    const svgPoint = pt.matrixTransform(svg.getScreenCTM()?.inverse())
+    return { x: svgPoint.x, y: svgPoint.y }
+  }
+
+  const handleMouseDown = (event: React.MouseEvent, nodeId: string) => {
+    event.preventDefault()
+    const node = nodeMap.get(nodeId)
+    if (!node) return
+    const point = getPointFromEvent(event)
+    setDraggedNode({ 
+        id: nodeId, 
+        offsetX: node.x - point.x,
+        offsetY: node.y - point.y
+    })
+  }
+
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (!draggedNode) return
+    event.preventDefault()
+    const point = getPointFromEvent(event)
+    setNodes(nodes.map(n => 
+        n.id === draggedNode.id 
+        ? { ...n, x: point.x + draggedNode.offsetX, y: point.y + draggedNode.offsetY } 
+        : n
+    ))
+  }
+
+  const handleMouseUp = (event: React.MouseEvent) => {
+    event.preventDefault()
+    setDraggedNode(null)
+  }
+
+  const handleMouseLeave = (event: React.MouseEvent) => {
+    event.preventDefault()
+    setDraggedNode(null)
+  }
+
   return (
     <TooltipProvider>
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${width} ${height}`}
+        className={cn("w-full h-auto", draggedNode ? 'cursor-grabbing' : '')}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+      >
         {/* Render Edges */}
         {edges.map((edge) => (
           <line
@@ -126,11 +183,12 @@ const DeviceTopologyGraph: React.FC = () => {
 
         {/* Render Nodes */}
         {nodes.map((node) => (
-          <Tooltip key={node.id}>
+          <Tooltip key={node.id} open={draggedNode ? false : undefined}>
             <TooltipTrigger asChild>
               <g
                 transform={`translate(${node.x}, ${node.y})`}
-                className="cursor-pointer group"
+                className={cn("group", draggedNode ? 'cursor-grabbing' : 'cursor-grab')}
+                onMouseDown={(e) => handleMouseDown(e, node.id)}
               >
                 <circle
                   r={nodeRadius}
@@ -144,13 +202,14 @@ const DeviceTopologyGraph: React.FC = () => {
                   y={-nodeRadius}
                   width={nodeRadius * 2}
                   height={nodeRadius * 2}
+                  className="pointer-events-none"
                 >
                   <div
                     xmlns="http://www.w3.org/1999/xhtml"
                     className="flex flex-col items-center justify-center h-full w-full p-1 text-center"
                   >
                     <DeviceIcon role={node.role} />
-                    <span className="text-[10px] font-mono select-none pointer-events-none mt-1 leading-tight block w-full truncate">
+                    <span className="text-[10px] font-mono select-none mt-1 leading-tight block w-full truncate">
                       {node.name}
                     </span>
                   </div>
