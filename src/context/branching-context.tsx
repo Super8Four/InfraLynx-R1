@@ -88,7 +88,7 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
 
     const mergeCommit: Commit = {
       id: `c${Date.now() + Math.random()}`,
-      message: mergeMessage?.trim() || `Merge branch '${currentBranch.name}'`,
+      message: mergeMessage?.trim() || `merge: Merge branch '${currentBranch.name}'`,
       body: `This would trigger server actions to persist changes to the database.\n\nChanges:\n${commitSummaries}`,
       branch: currentBranch.from,
       author: 'admin',
