@@ -13,9 +13,11 @@ import {
     initialDeviceRoles, 
 } from "@/lib/data"
 import type { DeviceInRack, ProcessedRack } from "@/lib/types"
+import { useToast } from "@/hooks/use-toast"
 
 
 export default function RacksPage() {
+    const { toast } = useToast()
     const [racks, setRacks] = useState<ProcessedRack[]>(() => {
         const deviceMap = new Map<string, typeof initialDevices>();
         initialDevices.forEach(device => {
@@ -81,7 +83,11 @@ export default function RacksPage() {
             
             // Check if device goes out of bounds
             if (newDeviceUnits.some(u => u < 1 || u > targetRack.u_height)) {
-                console.error("Device is out of bounds");
+                toast({
+                    title: "Move Failed",
+                    description: `Cannot place device outside of rack bounds (U1-${targetRack.u_height}).`,
+                    variant: "destructive",
+                });
                 return currentRacks;
             }
 
@@ -93,7 +99,11 @@ export default function RacksPage() {
             });
 
             if (isOverlap) {
-                console.error("Cannot drop device here, it overlaps with another device.");
+                 toast({
+                    title: "Move Failed",
+                    description: "Target location is occupied by another device.",
+                    variant: "destructive",
+                });
                 return currentRacks;
             }
 
@@ -120,10 +130,15 @@ export default function RacksPage() {
                 }
                 return rack;
             });
+            
+            toast({
+                title: "Device Moved",
+                description: `${deviceToMove.name} moved to Rack ${targetRack.name}, Unit ${targetUnit}.`,
+            });
 
             return nextRacks;
         });
-    }, []);
+    }, [toast]);
 
   return (
     <div className="space-y-6">

@@ -25,7 +25,7 @@ const getStatusBadge = (status: ProcessedRack['status']) => {
 }
 
 export default function Rack({ rack, onDragStart, onDragOver, onDrop }: RackProps) {
-  const { id, u_height = 42, devices, status, name, description, comments } = rack
+  const { id, u_height = 42, devices, status, name, roleId, comments } = rack
   const units = Array.from({ length: u_height }, (_, i) => u_height - i)
 
   const mountedDevices = new Map<number, DeviceInRack>()
@@ -45,51 +45,61 @@ export default function Rack({ rack, onDragStart, onDragOver, onDrop }: RackProp
             <CardTitle>{name}</CardTitle>
             {getStatusBadge(status)}
         </div>
-        <CardDescription>{description || 'No role assigned'}</CardDescription>
+        <CardDescription>{roleId || 'No role assigned'}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between gap-2">
-          <div className="flex w-full flex-col-reverse">
-            {units.map((u) => {
-              const device = mountedDevices.get(u)
-              if (device && device.u === u) {
-                return (
-                  <div
-                    key={`${device.id}-${u}`}
-                    draggable
-                    onDragStart={(e) => onDragStart(e, device)}
-                    onDrop={(e) => { e.stopPropagation(); onDrop(e, id, u) }}
-                    onDragOver={onDragOver}
-                    className={cn(
-                      "flex items-center justify-center text-white text-xs font-semibold border-x border-b border-border cursor-move",
-                      device.color
-                    )}
-                    style={{ height: `${device.height * 1.5}rem` }}
-                  >
-                    {device.name}
-                  </div>
-                )
-              }
-              if (device) {
-                return null
-              }
-              return (
-                <div
-                  key={u}
-                  onDrop={(e) => onDrop(e, id, u)}
-                  onDragOver={onDragOver}
-                  className="h-6 border-b border-dashed border-border last:border-b-0"
-                />
-              )
-            })}
-          </div>
-          <div className="flex flex-col-reverse text-xs text-muted-foreground">
-            {units.map((u) => (
-              <div key={u} className="flex h-6 items-center">
-                {u}
-              </div>
-            ))}
-          </div>
+        <div className="flex bg-muted/30 dark:bg-slate-900/50 p-2 rounded-md">
+            {/* Unit Numbers (Left) */}
+            <div className="flex flex-col-reverse text-xs text-center font-mono text-muted-foreground w-6 pr-2">
+                {units.map((u) => (
+                    <div key={`num-l-${u}`} className="flex h-6 items-center justify-center border-b border-transparent">
+                        {u}
+                    </div>
+                ))}
+            </div>
+            
+            {/* Rack Body */}
+            <div className="flex-1 border-x-2 border-slate-700 dark:border-slate-400 bg-background flex flex-col-reverse">
+                {units.map((u) => {
+                    const device = mountedDevices.get(u);
+                    if (device && device.u === u) {
+                        return (
+                            <div
+                                key={`${device.id}-${u}`}
+                                draggable
+                                onDragStart={(e) => onDragStart(e, device)}
+                                onDrop={(e) => { e.stopPropagation(); onDrop(e, id, u); }}
+                                onDragOver={onDragOver}
+                                className={cn(
+                                    "flex items-center justify-center text-white text-xs font-semibold border-y border-border cursor-move",
+                                    device.color
+                                )}
+                                style={{ height: `${device.height * 1.5}rem` }} // 1.5rem = h-6
+                            >
+                                <span className="truncate px-1">{device.name}</span>
+                            </div>
+                        );
+                    }
+                    if (device) return null; // This is a unit covered by a multi-U device
+                    return (
+                        <div
+                            key={`empty-${u}`}
+                            onDrop={(e) => { e.stopPropagation(); onDrop(e, id, u); }}
+                            onDragOver={onDragOver}
+                            className="h-6 border-b border-dashed border-border/50 last:border-b-0 hover:bg-primary/10"
+                        />
+                    );
+                })}
+            </div>
+            
+            {/* Unit Numbers (Right) */}
+            <div className="flex flex-col-reverse text-xs text-center font-mono text-muted-foreground w-6 pl-2">
+                {units.map((u) => (
+                    <div key={`num-r-${u}`} className="flex h-6 items-center justify-center border-b border-transparent">
+                        {u}
+                    </div>
+                ))}
+            </div>
         </div>
         {comments && <p className="text-xs text-muted-foreground mt-4 pt-4 border-t">{comments}</p>}
       </CardContent>
