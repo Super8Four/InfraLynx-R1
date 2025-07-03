@@ -1,98 +1,129 @@
+
+"use client"
+
+import { useState, useMemo, useCallback } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Rack from "@/components/rack"
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { 
+    initialRacks, 
+    initialDevices, 
+    initialSites, 
+    initialDeviceTypes, 
+    initialDeviceRoles, 
+} from "@/lib/data"
+import type { DeviceInRack, ProcessedRack } from "@/lib/types"
 
-type DeviceInRack = { 
-    id: number;
-    name: string;
-    u: number;
-    height: number;
-    color: string;
-    role: string;
-}
-
-type RackType = {
-    id: string;
-    status: 'active' | 'planned' | 'decommissioned';
-    role: string;
-    comments: string;
-    devices: DeviceInRack[];
-    uHeight?: number;
-}
-
-
-const SITE_A_RACKS: RackType[] = [
-    { 
-        id: "A101", 
-        status: 'active',
-        role: "Core Network",
-        comments: "Houses core switching and routing for Site A.",
-        devices: [
-            { id: 1, name: 'FIREWALL-01', u: 42, height: 1, color: 'bg-red-500', role: 'Firewall' },
-            { id: 2, name: 'CORE-SW-01', u: 40, height: 2, color: 'bg-indigo-500', role: 'Core Switch' },
-            { id: 3, name: 'ACCESS-SW-01', u: 38, height: 1, color: 'bg-blue-500', role: 'Access Switch' },
-            { id: 4, name: 'SERVER-WEB-01', u: 20, height: 2, color: 'bg-gray-600', role: 'Web Server' },
-            { id: 5, name: 'SERVER-DB-01', u: 18, height: 2, color: 'bg-gray-600', role: 'Database Server' },
-            { id: 6, name: 'UPS-A', u: 1, height: 3, color: 'bg-gray-800', role: 'UPS' },
-        ]
-    },
-    { 
-        id: "A102",
-        status: 'planned',
-        role: "Compute Expansion",
-        comments: "Future home for new virtualization cluster.",
-        devices: []
-    },
-    { 
-        id: "A103",
-        status: 'decommissioned',
-        role: "Legacy Storage",
-        comments: "To be removed in Q4.",
-        devices: []
-    },
-]
-
-const SITE_B_RACKS: RackType[] = [
-    { 
-        id: "B201",
-        status: 'active',
-        role: 'Edge & Virtualization',
-        comments: "Mixed-use rack for edge routing and VM hosts.",
-        devices: [
-            { id: 1, name: 'EDGE-RTR-02', u: 42, height: 2, color: 'bg-purple-500', role: 'Edge Router' },
-            { id: 2, name: 'TOR-SW-01', u: 22, height: 1, color: 'bg-green-500', role: 'ToR Switch' },
-            { id: 3, name: 'TOR-SW-02', u: 21, height: 1, color: 'bg-green-500', role: 'ToR Switch' },
-            { id: 4, name: 'SERVER-VM-HOST-01', u: 15, height: 4, color: 'bg-orange-500', role: 'VM Host' },
-            { id: 5, name: 'SERVER-VM-HOST-02', u: 11, height: 4, color: 'bg-orange-500', role: 'VM Host' },
-        ]
-    }
-]
 
 export default function RacksPage() {
+    // Memoize the initial processing of data to avoid re-computation on every render
+    const initialProcessedRacks = useMemo((): ProcessedRack[] => {
+        const deviceMap = new Map<string, typeof initialDevices>();
+        initialDevices.forEach(device => {
+            if (device.rackId) {
+                if (!deviceMap.has(device.rackId)) {
+                    deviceMap.set(device.rackId, []);
+                }
+                deviceMap.get(device.rackId)!.push(device);
+            }
+        });
+
+        return initialRacks.map(rack => {
+            const devicesData = deviceMap.get(rack.id) || [];
+            const devicesInRack: DeviceInRack[] = devicesData.map(device => {
+                const deviceType = initialDeviceTypes.find(dt => dt.id === device.deviceTypeId);
+                const deviceRole = initialDeviceRoles.find(dr => dr.id === device.deviceRoleId);
+                return {
+                    id: device.name, // Using name as a unique ID for this context
+                    name: device.name,
+                    u: device.position || 0,
+                    height: deviceType?.u_height || 1,
+                    color: deviceRole?.color || 'bg-gray-600',
+                    role: deviceRole?.name || 'Unknown',
+                    rackId: rack.id,
+                };
+            }).filter(d => d.u > 0); // Only include devices with a position
+
+            return { ...rack, devices: devicesInRack };
+        });
+    }, []);
+
+    const [racks, setRacks] = useState<ProcessedRack[]>(initialProcessedRacks);
+    const sites = useMemo(() => initialSites.filter(site => racks.some(r => r.siteId === site.id)), [racks]);
+
+    const handleDragStart = useCallback((event: React.DragEvent<HTMLDivElement>, device: DeviceInRack) => {
+        event.dataTransfer.setData("application/json", JSON.stringify(device));
+        event.dataTransfer.effectAllowed = "move";
+    }, []);
+
+    const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+    }, []);
+
+    const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>, targetRackId: string, targetUnit: number) => {
+        event.preventDefault();
+        const deviceToMoveJSON = event.dataTransfer.getData("application/json");
+        if (!deviceToMoveJSON) return;
+        
+        const deviceToMove: DeviceInRack = JSON.parse(deviceToMoveJSON);
+        
+        // Prevent dropping on itself if not changing position
+        if(deviceToMove.rackId === targetRackId && deviceToMove.u === targetUnit) return;
+
+        setRacks(currentRacks => {
+            const newRacks = JSON.parse(JSON.stringify(currentRacks)) as ProcessedRack[];
+
+            // Find and remove the device from its original rack
+            const sourceRack = newRacks.find(r => r.id === deviceToMove.rackId);
+            if (sourceRack) {
+                sourceRack.devices = sourceRack.devices.filter(d => d.id !== deviceToMove.id);
+            }
+
+            // Find the target rack and add the device
+            const targetRack = newRacks.find(r => r.id === targetRackId);
+            if (targetRack) {
+                // Update device properties
+                deviceToMove.rackId = targetRackId;
+                deviceToMove.u = targetUnit;
+                targetRack.devices.push(deviceToMove);
+            }
+
+            return newRacks;
+        });
+    }, []);
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
             <CardTitle>Rack Elevations</CardTitle>
-            <CardDescription>Visualize device placement in data center racks.</CardDescription>
+            <CardDescription>Visualize and manage device placement in data center racks.</CardDescription>
         </CardHeader>
       </Card>
-      <Tabs defaultValue="site-a">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="site-a">Data Center A</TabsTrigger>
-          <TabsTrigger value="site-b">Data Center B</TabsTrigger>
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:w-auto">
+          <TabsTrigger value="all">All Locations</TabsTrigger>
+          {sites.map(site => (
+              <TabsTrigger key={site.id} value={site.id}>{site.name}</TabsTrigger>
+          ))}
         </TabsList>
-        <TabsContent value="site-a" className="mt-6">
+        
+        <TabsContent value="all" className="mt-6">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {SITE_A_RACKS.map(rack => <Rack key={rack.id} rack={rack} />)}
+            {racks.map(rack => <Rack key={rack.id} rack={rack} onDragStart={handleDragStart} onDragOver={handleDragOver} onDrop={handleDrop} />)}
           </div>
         </TabsContent>
-        <TabsContent value="site-b" className="mt-6">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {SITE_B_RACKS.map(rack => <Rack key={rack.id} rack={rack} />)}
-          </div>
-        </TabsContent>
+
+        {sites.map(site => (
+            <TabsContent key={site.id} value={site.id} className="mt-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {racks.filter(r => r.siteId === site.id).map(rack => (
+                        <Rack key={rack.id} rack={rack} onDragStart={handleDragStart} onDragOver={handleDragOver} onDrop={handleDrop} />
+                    ))}
+                </div>
+            </TabsContent>
+        ))}
       </Tabs>
     </div>
   )
