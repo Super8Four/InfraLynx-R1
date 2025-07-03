@@ -52,6 +52,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar"
+import { useSettings } from "@/context/settings-context"
 
 
 const mainNavItems = [
@@ -113,6 +114,8 @@ const deviceLinks = [
 
 export function NavLinks() {
   const pathname = usePathname()
+  const { settings } = useSettings()
+
   const [openSections, setOpenSections] = React.useState({
     organization: pathname.startsWith('/organization'),
     racks: pathname.startsWith('/racks'),
@@ -202,6 +205,7 @@ export function NavLinks() {
 
       {mainNavItems.slice(1).map((item) => {
         if (item.href.startsWith('/devices')) return null;
+        if (item.href === "/branching" && !settings.isBranchingEnabled) return null;
 
         const isActive =
           item.href === "/"

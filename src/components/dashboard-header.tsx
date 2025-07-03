@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -27,11 +28,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useBranching } from "@/context/branching-context"
 import { cn } from "@/lib/utils"
+import { useSettings } from "@/context/settings-context"
 
 export default function DashboardHeader() {
   const pathname = usePathname()
   const segments = pathname.split('/').filter(Boolean)
-  const { branches, activeBranch, setActiveBranch } = useBranching()
+  const { settings } = useSettings()
+  // useBranching might throw an error if branching is disabled, so we wrap it
+  const branchingData = settings.isBranchingEnabled ? useBranching() : null
   
   const getBreadcrumbName = (segment: string) => {
     if (segment === "ipam") return "IPAM"
@@ -73,31 +77,33 @@ export default function DashboardHeader() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="relative ml-auto flex items-center gap-2">
-         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-1">
-                    <GitBranch className="h-3.5 w-3.5" />
-                    <span>{activeBranch}</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Switch Branch</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {branches.map(branch => (
-                    <DropdownMenuItem key={branch.id} onSelect={() => setActiveBranch(branch.id)} disabled={branch.merged}>
-                       <GitBranch className="mr-2 h-4 w-4" />
-                       <span>{branch.name}</span>
-                       {activeBranch === branch.id && <Check className="ml-auto h-4 w-4" />}
-                    </DropdownMenuItem>
-                ))}
-                 <DropdownMenuSeparator />
-                 <DropdownMenuItem asChild>
-                    <Link href="/branching">
-                        Manage Branches
-                    </Link>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+         {settings.isBranchingEnabled && branchingData && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 gap-1">
+                      <GitBranch className="h-3.5 w-3.5" />
+                      <span>{branchingData.activeBranch}</span>
+                  </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Switch Branch</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {branchingData.branches.map(branch => (
+                      <DropdownMenuItem key={branch.id} onSelect={() => branchingData.setActiveBranch(branch.id)} disabled={branch.merged}>
+                        <GitBranch className="mr-2 h-4 w-4" />
+                        <span>{branch.name}</span>
+                        {branchingData.activeBranch === branch.id && <Check className="ml-auto h-4 w-4" />}
+                      </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                      <Link href="/branching">
+                          Manage Branches
+                      </Link>
+                  </DropdownMenuItem>
+              </DropdownMenuContent>
+          </DropdownMenu>
+         )}
 
         <div className="relative flex-1 md:grow-0">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -110,7 +116,7 @@ export default function DashboardHeader() {
         <ThemeToggle />
       </div>
 
-       {activeBranch !== 'main' && (
+       {settings.isBranchingEnabled && branchingData?.activeBranch !== 'main' && (
         <div className="absolute bottom-0 left-0 w-full h-1 bg-primary/80 animate-pulse" />
       )}
     </header>

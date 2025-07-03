@@ -51,6 +51,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useSettings } from "@/context/settings-context"
 
 const ResponsiveGridLayout = WidthProvider(Responsive)
 
@@ -105,11 +106,57 @@ const ipUsageConfig = {
   deprecated: { label: "Deprecated", color: "hsl(var(--chart-4))" },
 } satisfies ChartConfig
 
-
-export default function DashboardPage() {
+function BranchingWidget() {
   const { branches, commits, activeBranch, setActiveBranch } = useBranching()
   const activeBranches = branches.filter(b => !b.merged && b.name !== 'main')
   const recentCommits = commits.slice(0, 15)
+
+  return (
+    <Card className="h-full flex flex-col">
+      <CardHeader className="flex flex-row items-center justify-between relative">
+        <div className="drag-handle cursor-move absolute top-2 right-2 p-1 text-muted-foreground"><Move className="h-4 w-4" /></div>
+        <div>
+          <CardTitle>Branching Overview</CardTitle>
+          <CardDescription>
+            {activeBranches.length} active feature branches.
+          </CardDescription>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/branching">
+            Manage Branches
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-4 flex-1 flex flex-col">
+        <div className="space-y-2">
+          {activeBranches.length > 0 ? (
+            activeBranches.map(branch => (
+              <button key={branch.id} onClick={() => setActiveBranch(branch.id)} className="w-full text-left">
+                <div className="p-2 rounded-md hover:bg-muted flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <GitBranch className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">{branch.name}</span>
+                    <Badge variant="secondary">from '{branch.from}'</Badge>
+                  </div>
+                  {activeBranch === branch.id && <Badge variant="default">Active</Badge>}
+                </div>
+              </button>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground px-2">No active feature branches.</p>
+          )}
+        </div>
+        <div className="border-t pt-4 flex-1">
+          <BranchGraph branches={branches} commits={recentCommits} activeBranch={activeBranch} />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+export default function DashboardPage() {
+  const { settings } = useSettings()
 
   // In a real app, these stats would come from props passed by a server component
   const STATS = [
@@ -144,12 +191,18 @@ export default function DashboardPage() {
   ]
 
   const layouts = {
-    lg: [
-      { i: 'stats', x: 0, y: 0, w: 12, h: 1, isResizable: false },
-      { i: 'branching', x: 0, y: 1, w: 7, h: 4 },
-      { i: 'ip-usage', x: 7, y: 1, w: 5, h: 4 },
-      { i: 'activity', x: 0, y: 5, w: 12, h: 4 },
-    ],
+    lg: settings.isBranchingEnabled
+      ? [
+          { i: "stats", x: 0, y: 0, w: 12, h: 1, isResizable: false },
+          { i: "branching", x: 0, y: 1, w: 7, h: 4 },
+          { i: "ip-usage", x: 7, y: 1, w: 5, h: 4 },
+          { i: "activity", x: 0, y: 5, w: 12, h: 4 },
+        ]
+      : [
+          { i: "stats", x: 0, y: 0, w: 12, h: 1, isResizable: false },
+          { i: "ip-usage", x: 0, y: 1, w: 6, h: 4 },
+          { i: "activity", x: 6, y: 1, w: 6, h: 4 },
+        ],
   }
 
   return (
@@ -189,48 +242,11 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div key="branching">
-        <Card className="h-full flex flex-col">
-          <CardHeader className="flex flex-row items-center justify-between relative">
-            <div className="drag-handle cursor-move absolute top-2 right-2 p-1 text-muted-foreground"><Move className="h-4 w-4" /></div>
-            <div>
-              <CardTitle>Branching Overview</CardTitle>
-              <CardDescription>
-                {activeBranches.length} active feature branches.
-              </CardDescription>
-            </div>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/branching">
-                Manage Branches
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4 flex-1 flex flex-col">
-            <div className="space-y-2">
-              {activeBranches.length > 0 ? (
-                activeBranches.map(branch => (
-                  <button key={branch.id} onClick={() => setActiveBranch(branch.id)} className="w-full text-left">
-                    <div className="p-2 rounded-md hover:bg-muted flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <GitBranch className="h-4 w-4 text-primary" />
-                        <span className="font-medium text-sm">{branch.name}</span>
-                        <Badge variant="secondary">from '{branch.from}'</Badge>
-                      </div>
-                      {activeBranch === branch.id && <Badge variant="default">Active</Badge>}
-                    </div>
-                  </button>
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground px-2">No active feature branches.</p>
-              )}
-            </div>
-            <div className="border-t pt-4 flex-1">
-              <BranchGraph branches={branches} commits={recentCommits} activeBranch={activeBranch} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {settings.isBranchingEnabled && (
+        <div key="branching">
+          <BranchingWidget />
+        </div>
+      )}
 
       <div key="ip-usage">
         <Card className="h-full flex flex-col">

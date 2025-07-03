@@ -1,3 +1,6 @@
+
+"use client"
+
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +15,7 @@ import DashboardHeader from "@/components/dashboard-header"
 import { NavLinks } from "@/components/nav-links"
 import { Button } from "@/components/ui/button"
 import { BranchingProvider } from "@/context/branching-context"
+import { useSettings } from "@/context/settings-context"
 
 const LynxIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg
@@ -47,39 +51,45 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <BranchingProvider>
-      <SidebarProvider>
-        <Sidebar>
-          <div className="flex h-full flex-col">
-            <SidebarHeader className="p-0 border-b">
-              <Link href="/" className="flex h-14 items-center gap-2 px-4">
-                  <div className="rounded-lg bg-sidebar-primary p-2 text-sidebar-primary-foreground">
-                      <LynxIcon className="h-6 w-6" />
-                  </div>
-                  <span className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-                      InfraLynx
-                  </span>
-              </Link>
-            </SidebarHeader>
-            <SidebarContent className="pt-4">
-              <NavLinks />
-            </SidebarContent>
-            <SidebarFooter>
-              <Button variant="ghost" className="w-full justify-start gap-2">
-                <LifeBuoy className="h-4 w-4" />
-                <span className="group-data-[collapsible=icon]:hidden">Support</span>
-              </Button>
-            </SidebarFooter>
-          </div>
-        </Sidebar>
-        <SidebarInset>
-          <DashboardHeader />
-          <main className="flex-1 overflow-auto bg-muted/30 p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
-        </SidebarInset>
-      </SidebarProvider>
-    </BranchingProvider>
+  const { settings } = useSettings()
+
+  const layoutContent = (
+    <SidebarProvider>
+      <Sidebar>
+        <div className="flex h-full flex-col">
+          <SidebarHeader className="p-0 border-b">
+            <Link href="/" className="flex h-14 items-center gap-2 px-4">
+                <div className="rounded-lg bg-sidebar-primary p-2 text-sidebar-primary-foreground">
+                    <LynxIcon className="h-6 w-6" />
+                </div>
+                <span className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+                    InfraLynx
+                </span>
+            </Link>
+          </SidebarHeader>
+          <SidebarContent className="pt-4">
+            <NavLinks />
+          </SidebarContent>
+          <SidebarFooter>
+            <Button variant="ghost" className="w-full justify-start gap-2">
+              <LifeBuoy className="h-4 w-4" />
+              <span className="group-data-[collapsible=icon]:hidden">Support</span>
+            </Button>
+          </SidebarFooter>
+        </div>
+      </Sidebar>
+      <SidebarInset>
+        <DashboardHeader />
+        <main className="flex-1 overflow-auto bg-muted/30 p-4 sm:p-6 lg:p-8">
+          {children}
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   )
+
+  if (settings.isBranchingEnabled) {
+    return <BranchingProvider>{layoutContent}</BranchingProvider>
+  }
+  
+  return layoutContent
 }
