@@ -1,4 +1,4 @@
-# **App Name**: InfraWeb
+# **App Name**: InfraLynx
 
 ## Core Features:
 
