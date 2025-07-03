@@ -2,7 +2,7 @@
 "use client"
 
 import { useState } from "react"
-import { GitBranch, GitMerge, Archive, PlusCircle, Check, ChevronsRight } from "lucide-react"
+import { GitBranch, GitMerge, Archive, PlusCircle, Check, ChevronsRight, ArrowDownToLine } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -43,6 +43,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
@@ -52,25 +59,27 @@ import { useBranching } from "@/context/branching-context"
 
 const branchSchema = z.object({
   name: z.string().min(3, "Branch name must be at least 3 characters.").regex(/^[a-z0-9-]+$/, "Can only contain lowercase letters, numbers, and hyphens."),
+  from: z.string().min(1, "A source branch must be selected."),
 })
 
 type BranchFormValues = z.infer<typeof branchSchema>
 
 export default function BranchingPage() {
   const { toast } = useToast()
-  const { branches, commits, activeBranch, setActiveBranch, createBranch, mergeActiveBranch } = useBranching();
+  const { branches, commits, activeBranch, setActiveBranch, createBranch, mergeActiveBranch, updateFromMain } = useBranching();
 
   const [isAddBranchOpen, setIsAddBranchOpen] = useState(false)
   const [isMergeConfirmOpen, setIsMergeConfirmOpen] = useState(false)
   const [isGraphModalOpen, setIsGraphModalOpen] = useState(false)
+  const [isUpdateConfirmOpen, setIsUpdateConfirmOpen] = useState(false)
 
   const form = useForm<BranchFormValues>({
     resolver: zodResolver(branchSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", from: "main" },
   })
 
   const handleCreateBranch = (data: BranchFormValues) => {
-    const success = createBranch(data.name);
+    const success = createBranch(data.name, data.from);
     if (success) {
         setIsAddBranchOpen(false)
         form.reset()
@@ -83,8 +92,13 @@ export default function BranchingPage() {
     mergeActiveBranch();
     setIsMergeConfirmOpen(false);
   }
+
+  const handleUpdateFromMain = () => {
+    updateFromMain();
+    setIsUpdateConfirmOpen(false);
+  }
   
-  const currentBranchIsMergable = activeBranch !== 'main' && !branches.find(b => b.id === activeBranch)?.merged;
+  const currentBranchIsActionable = activeBranch !== 'main' && !branches.find(b => b.id === activeBranch)?.merged;
   const recentCommits = commits.slice(0, 20);
 
   return (
@@ -131,7 +145,31 @@ export default function BranchingPage() {
                             </DialogHeader>
                              <Form {...form}>
                                 <form onSubmit={form.handleSubmit(handleCreateBranch)} className="space-y-4">
-                                     <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>Branch Name</FormLabel> <FormControl><Input placeholder="e.g., feature/add-new-site" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                                     <FormField
+                                        control={form.control}
+                                        name="from"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                            <FormLabel>Source Branch</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a source branch" />
+                                                </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                {branches.filter(b => !b.merged).map(b => (
+                                                    <SelectItem key={b.id} value={b.id}>
+                                                    {b.name}
+                                                    </SelectItem>
+                                                ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                            </FormItem>
+                                        )}
+                                        />
+                                     <FormField control={form.control} name="name" render={({ field }) => ( <FormItem> <FormLabel>New Branch Name</FormLabel> <FormControl><Input placeholder="e.g., feature/add-new-site" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
                                      <DialogFooter>
                                         <Button type="button" variant="ghost" onClick={() => setIsAddBranchOpen(false)}>Cancel</Button>
                                         <Button type="submit">Create and Switch</Button>
@@ -140,27 +178,51 @@ export default function BranchingPage() {
                              </Form>
                         </DialogContent>
                     </Dialog>
-                    {currentBranchIsMergable && (
-                        <AlertDialog open={isMergeConfirmOpen} onOpenChange={setIsMergeConfirmOpen}>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="default" className="w-full bg-green-600 hover:bg-green-700">
-                                    <GitMerge className="mr-2 h-4 w-4" />
-                                    Merge Branch '{activeBranch}'
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure you want to merge?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will merge the changes from <span className="font-mono bg-muted p-1 rounded-md">{activeBranch}</span> into <span className="font-mono bg-muted p-1 rounded-md">{branches.find(b => b.id === activeBranch)?.from}</span>. This action cannot be undone.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleMerge} className="bg-green-600 hover:bg-green-700">Confirm Merge</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+
+                    {currentBranchIsActionable && (
+                        <div className="space-y-2 pt-2 border-t">
+                            <AlertDialog open={isUpdateConfirmOpen} onOpenChange={setIsUpdateConfirmOpen}>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="outline" className="w-full">
+                                        <ArrowDownToLine className="mr-2 h-4 w-4" />
+                                        Update from main
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will merge the latest changes from <span className="font-mono bg-muted p-1 rounded-md">main</span> into your current branch <span className="font-mono bg-muted p-1 rounded-md">{activeBranch}</span>.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleUpdateFromMain}>Confirm Update</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+
+                            <AlertDialog open={isMergeConfirmOpen} onOpenChange={setIsMergeConfirmOpen}>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="default" className="w-full bg-green-600 hover:bg-green-700">
+                                        <GitMerge className="mr-2 h-4 w-4" />
+                                        Merge Branch '{activeBranch}'
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure you want to merge?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will merge the changes from <span className="font-mono bg-muted p-1 rounded-md">{activeBranch}</span> into <span className="font-mono bg-muted p-1 rounded-md">{branches.find(b => b.id === activeBranch)?.from}</span>. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleMerge} className="bg-green-600 hover:bg-green-700">Confirm Merge</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     )}
                 </CardContent>
             </Card>

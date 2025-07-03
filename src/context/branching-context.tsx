@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
@@ -23,8 +24,9 @@ type BranchingContextType = {
   commits: Commit[]
   activeBranch: string
   setActiveBranch: (branchId: string) => void
-  createBranch: (name: string) => boolean
+  createBranch: (name: string, fromBranch: string) => boolean
   mergeActiveBranch: () => void
+  updateFromMain: () => void
 }
 
 const initialBranches: Branch[] = [
@@ -44,7 +46,7 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
   const [commits, setCommits] = useState<Commit[]>(initialCommits)
   const [activeBranch, setActiveBranch] = useState<string>("main")
 
-  const createBranch = (name: string): boolean => {
+  const createBranch = (name: string, fromBranch: string): boolean => {
     if (branches.some(b => b.name === name)) {
       return false; // Indicate failure
     }
@@ -52,12 +54,12 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
     const newBranch: Branch = {
       id: name,
       name: name,
-      from: activeBranch,
+      from: fromBranch,
       merged: false,
     }
     const newCommit: Commit = {
-        id: `c${Date.now()}`,
-        message: `feat: Create branch '${name}' from '${activeBranch}'`,
+        id: `c${Date.now() + Math.random()}`,
+        message: `feat: Create branch '${name}' from '${fromBranch}'`,
         branch: name,
         author: 'admin',
         timestamp: 'Just now'
@@ -97,6 +99,9 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
       timestamp: 'Just now'
     }));
 
+    // Find the original creation commit to keep it in history.
+    const creationCommit = commits.find(c => c.message.includes(`Create branch '${currentBranch.name}'`));
+    
     // Create the merge commit, which is the newest of all.
     const mergeCommit: Commit = {
       id: `c${baseTimestamp + simulatedWork.length}`,
@@ -107,6 +112,14 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
     };
 
     // Prepend all new commits to the history (newest first).
+    // Ensure the creation commit is not lost if it was part of the recent slice.
+    const otherCommits = commits.filter(c => c.id !== creationCommit?.id);
+    
+    let allNewCommits = [mergeCommit, ...featureCommits];
+    if (creationCommit) {
+      allNewCommits.push(creationCommit);
+    }
+
     setCommits(prev => [mergeCommit, ...featureCommits, ...prev]);
 
     // Mark branch as merged and switch to parent branch.
@@ -115,8 +128,27 @@ export const BranchingProvider = ({ children }: { children: ReactNode }) => {
     toast({ title: "Merge Successful", description: `Branch '${currentBranch.name}' has been merged into '${currentBranch.from}'.`})
   }
 
+  const updateFromMain = () => {
+    const currentBranch = branches.find(b => b.id === activeBranch);
+    if (!currentBranch || currentBranch.name === 'main' || currentBranch.merged) {
+      toast({ title: "Action Not Allowed", description: "Cannot update this branch from main.", variant: "destructive" });
+      return;
+    }
+
+    const mergeCommit: Commit = {
+      id: `c${Date.now() + Math.random()}`,
+      message: `merge: Merge branch 'main' into '${currentBranch.name}'`,
+      branch: currentBranch.name, // The commit is ON the feature branch
+      author: 'admin',
+      timestamp: 'Just now'
+    };
+    
+    setCommits(prev => [mergeCommit, ...prev]);
+    toast({ title: "Branch Updated", description: `Latest changes from 'main' have been merged into '${currentBranch.name}'.`});
+  }
+
   return (
-    <BranchingContext.Provider value={{ branches, commits, activeBranch, setActiveBranch, createBranch, mergeActiveBranch }}>
+    <BranchingContext.Provider value={{ branches, commits, activeBranch, setActiveBranch, createBranch, mergeActiveBranch, updateFromMain }}>
       {children}
     </BranchingContext.Provider>
   )
