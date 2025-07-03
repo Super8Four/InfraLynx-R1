@@ -18,7 +18,7 @@ import {
   Plug,
   PackageCheck,
   Settings2,
-  GitMerge,
+  Share2,
   GitBranch,
   UserCog,
   ChevronRight,
@@ -66,7 +66,7 @@ const mainNavItems = [
   { href: "/power", label: "Power", icon: Plug },
   { href: "/provisioning", label: "Provisioning", icon: PackageCheck },
   { href: "/operations", label: "Operations", icon: Settings2 },
-  { href: "/topology", label: "Topology", icon: GitMerge },
+  { href: "/topology", label: "Topology", icon: Share2 },
   { href: "/branching", label: "Branching", icon: GitBranch },
   { href: "/admin", label: "Admin", icon: UserCog },
 ]

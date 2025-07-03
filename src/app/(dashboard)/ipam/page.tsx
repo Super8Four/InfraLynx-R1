@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { PlusCircle, Edit, Server, Tv, Globe } from "lucide-react"
+import { PlusCircle, Edit, Server, Monitor, Globe } from "lucide-react"
 import { prefixes, type Prefix } from "@/lib/data"
 
 const getStatusBadge = (status: string) => {
@@ -40,7 +40,7 @@ const getStatusBadge = (status: string) => {
 const getAssignedObjectIcon = (type?: "device" | "vm" | "interface") => {
     switch (type) {
         case 'device': return <Server className="h-4 w-4 text-muted-foreground" />;
-        case 'vm': return <Tv className="h-4 w-4 text-muted-foreground" />;
+        case 'vm': return <Monitor className="h-4 w-4 text-muted-foreground" />;
         case 'interface': return <Globe className="h-4 w-4 text-muted-foreground" />;
         default: return null;
     }
