@@ -47,9 +47,14 @@ const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBran
     const commitMap = new Map<string, Node>();
     const branchHeads = new Map<string, string>();
     const finalLabels: { name: string; x: number; y: number }[] = [];
-
+    
+    const calculatedWidth = isHorizontal ? Math.max(400, (commits.length * 50) + 150) : branches.length * 60 + 100;
+    const calculatedHeight = isHorizontal ? branches.length * 40 + 20 : commits.length * 50 + 60;
+    
     const reversedCommits = [...commits].reverse();
-    let mainAxisOffset = 30;
+    // Start from the bottom for vertical, or left for horizontal.
+    let mainAxisOffset = isHorizontal ? 30 : calculatedHeight - 60;
+
 
     reversedCommits.forEach((commit) => {
         const crossAxisPosition = branchLane.get(commit.branch) || 0;
@@ -87,7 +92,12 @@ const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBran
         }
 
         branchHeads.set(commit.branch, commit.id);
-        mainAxisOffset += 50;
+        
+        if (isHorizontal) {
+            mainAxisOffset += 50;
+        } else {
+            mainAxisOffset -= 50; // Go upwards
+        }
     });
 
     branches.forEach(branch => {
@@ -104,9 +114,6 @@ const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBran
         }
     })
 
-    const calculatedWidth = isHorizontal ? Math.max(400, (commits.length * 50) + 150) : branches.length * 60 + 100;
-    const calculatedHeight = isHorizontal ? branches.length * 40 + 20 : commits.length * 50 + 60;
-    
     return { nodes: commitNodes, edges: commitEdges, branchLabels: finalLabels, width: calculatedWidth, height: calculatedHeight };
 
   }, [branches, commits, orientation]);
@@ -126,10 +133,19 @@ const BranchGraph: React.FC<BranchGraphProps> = ({ branches, commits, activeBran
   }
   
   const getPathD = (sourceNode: Node, targetNode: Node) => {
+    const { x: x1, y: y1 } = sourceNode;
+    const { x: x2, y: y2 } = targetNode;
+
     if (orientation === 'horizontal') {
-        return `M ${sourceNode.x} ${sourceNode.y} C ${sourceNode.x + 25} ${sourceNode.y}, ${targetNode.x - 25} ${targetNode.y}, ${targetNode.x} ${targetNode.y}`;
+        return `M ${x1} ${y1} C ${x1 + 25} ${y1}, ${x2 - 25} ${y2}, ${x2} ${y2}`;
     }
-    return `M ${sourceNode.x} ${sourceNode.y} C ${sourceNode.x} ${sourceNode.y + 25}, ${targetNode.x} ${targetNode.y - 25}, ${targetNode.x} ${targetNode.y}`;
+    
+    // For vertical (bottom-up), parent (source) y is > child (target) y.
+    if (y1 > y2) {
+      return `M ${x1} ${y1} C ${x1} ${y1 - 25}, ${x2} ${y2 + 25}, ${x2} ${y2}`;
+    }
+    // Fallback for any other case
+    return `M ${x1} ${y1} C ${x1} ${y1 + 25}, ${x2} ${y2 - 25}, ${x2} ${y2}`;
   }
   
   const getLabelAnchor = () => orientation === 'horizontal' ? 'start' : 'middle';
